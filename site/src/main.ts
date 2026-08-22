@@ -303,93 +303,130 @@ function curvedHtml(): string {
   </section>`;
 }
 
-/* ---------- the same plan, twice ---------- */
+/* ---------- the same plan, four vaults: the picker ---------- */
 
-function solverHtml(): string {
-  const full = takhtPlateFull();
-  const symmetries = [0, 2, 4, 6].flatMap((k) => [
-    Iso.rotation(k),
-    Iso.reflection(2).then(Iso.rotation(k)),
-  ]);
-  const report = enumerateAssignments(full, { maxFreeOrbits: 20, symmetries });
-  const lo = report.solutions[0]!;
-  const hi = report.solutions[report.solutions.length - 1]!;
+const PLATE_SYMMETRIES = [0, 2, 4, 6].flatMap((k) => [
+  Iso.rotation(k),
+  Iso.reflection(2).then(Iso.rotation(k)),
+]);
 
-  const tiered = (sol: typeof lo): Plan => ({
-    sector: full.sector,
-    placed: full.placed.map((p, i) => {
-      const f = sol.faces.find((x) => x.placedIndex === i)!;
-      return { ...p, tier: f.tier };
-    }),
+const openCentre = (a: { toNumbers(): [number, number] }, b: { toNumbers(): [number, number] }) => {
+  const [ax, ay] = a.toNumbers();
+  const [bx, by] = b.toNumbers();
+  return !(Math.hypot(ax, ay) < 4.3 && Math.hypot(bx, by) < 4.3);
+};
+
+let pickerData: { full: Plan; report: ReturnType<typeof enumerateAssignments> } | null = null;
+function pickerCompute() {
+  if (!pickerData) {
+    const full = takhtPlateFull();
+    pickerData = {
+      full,
+      report: enumerateAssignments(full, { maxFreeOrbits: 20, symmetries: PLATE_SYMMETRIES }),
+    };
+  }
+  return pickerData;
+}
+
+const pickerCache = new Map<number, { plan: string; above: string; below: string; tris: number }>();
+
+function renderPick(i: number): void {
+  const { full, report } = pickerCompute();
+  let entry = pickerCache.get(i);
+  if (!entry) {
+    const sol = report.solutions[i]!;
+    const tierByIdx: number[] = [];
+    for (const f of sol.faces) tierByIdx[f.placedIndex] = f.tier;
+    const tiered: Plan = {
+      sector: full.sector,
+      placed: full.placed.map((p, pi) => ({ ...p, tier: tierByIdx[pi]! })),
+    };
+    const { mesh } = liftVault(full, sol.faces, {
+      arcSegments: 2,
+      rampSegments: 1,
+      closeBoundary: openCentre,
+    });
+    entry = {
+      plan: planToSvg(tiered, { width: 330, colorBy: 'tier', showSector: false }),
+      above: meshIsoSvg(mesh),
+      below: meshIsoSvg(mesh, { fromBelow: true }),
+      tris: mesh.triangles.length / 3,
+    };
+    pickerCache.set(i, entry);
+  }
+  document.querySelector('#pick-plan')!.innerHTML = entry.plan;
+  document.querySelector('#pick-above')!.innerHTML = entry.above;
+  document.querySelector('#pick-below')!.innerHTML = entry.below;
+  const sol = report.solutions[i]!;
+  document.querySelector('#pick-status')!.textContent =
+    `reading ${i + 1} of ${report.solutions.length} · crown-rim reach ${sol.graphReach} · ` +
+    `${sol.faces.filter((f) => f.type === 'cell').length} cells, ` +
+    `${sol.faces.filter((f) => f.type === 'intermediate').length} intermediates · ${entry.tris} triangles`;
+  document.querySelectorAll('.pick').forEach((btn) => {
+    btn.classList.toggle('active', (btn as HTMLElement).dataset.pick === String(i));
   });
+}
 
-  const fig = (sol: typeof lo, label: string) => `
-      <figure class="figure" style="flex:0 1 430px">
-        ${planToSvg(tiered(sol), { width: 410, colorBy: 'tier', showSector: false })}
-        <figcaption>${label}</figcaption>
-      </figure>`;
-
+function pickerHtml(): string {
+  const { report } = pickerCompute();
+  const label = (s: (typeof report.solutions)[number], i: number) => {
+    const tag =
+      s.graphReach === 17
+        ? ' — the regular-centre reading'
+        : s.graphReach === 18
+          ? ' — Harb’s reading'
+          : '';
+    return `Reading ${i + 1} · reach ${s.graphReach}${tag}`;
+  };
+  const buttons = report.solutions
+    .map((s, i) => `<button class="pick" data-pick="${i}">${label(s, i)}</button>`)
+    .join('\n      ');
   return `<section>
-    <h2>The same plan, twice</h2>
-    <p class="caption">Scene 7, computed. Harmsen's reconstruction rules — arrows toward
-    the apexes, heights rising by exactly one, orbits of parallel edges sharing direction,
-    the wall and centre rules — pin all but ${report.freeOrbits} orbits of the full plate.
-    Those ${report.freeOrbits} free choices yield exactly ${report.solutions.length} valid
-    vaults from this one plan, every one of them starting in the corners (the published
-    finding: no regular springing without editing the plan), reaching ${[...new Set(report.solutions.map((s) => s.graphReach))].join(', ')}
-    tiers at the crown rim — the two published readings, 17 and 18, among them. The
-    drawing does not determine the building.</p>
-    <span class="status ok">${report.freeOrbits} free orbits · ${report.candidatesTried} candidates → ${report.solutions.length} valid vaults</span>
+    <h2>The same plan, ${report.solutions.length} vaults</h2>
+    <p class="caption">Scene 7, working. Harmsen's rules pin all but ${report.freeOrbits}
+    orbits of the plate's muqarnas graph; those ${report.freeOrbits} free choices admit
+    exactly ${report.solutions.length} valid vaults — every one starting in the corners
+    (the published finding: no regular springing without editing the plan), the published
+    17- and 18-tier readings among them. Pick one. The plan holds; the building changes.
+    The drawing does not determine the building, and the master's knowledge was never
+    fully in the plan.</p>
+    <div class="picker">
+      ${buttons}
+    </div>
+    <span class="status ok" id="pick-status">…</span>
     <div class="row">
-      ${fig(lo, `Reading one: tiers banded outward-in, reach ${lo.graphReach}.`)}
-      ${fig(hi, `Reading two: same plan, different heights, reach ${hi.graphReach}.`)}
+      <figure class="figure" style="flex:1 1 300px">
+        <div id="pick-plan"></div>
+        <figcaption>The plan, tier-banded by the chosen reading.</figcaption>
+      </figure>
+      <figure class="figure" style="flex:1 1 330px">
+        <div id="pick-above"></div>
+        <figcaption>The vault it makes, from above.</figcaption>
+      </figure>
+      <figure class="figure" style="flex:1 1 330px">
+        <div id="pick-below"></div>
+        <figcaption>And from below — the built-for view.</figcaption>
+      </figure>
     </div>
   </section>`;
 }
 
-/* ---------- the vault ---------- */
-
-function vaultHtml(): string {
-  const full = takhtPlateFull();
-  const symmetries = [0, 2, 4, 6].flatMap((k) => [
-    Iso.rotation(k),
-    Iso.reflection(2).then(Iso.rotation(k)),
-  ]);
-  const report = enumerateAssignments(full, { maxFreeOrbits: 20, symmetries });
-  const solution = report.solutions.find((s) => s.graphReach === 17) ?? report.solutions[0]!;
-  const openCentre = (a: { toNumbers(): [number, number] }, b: { toNumbers(): [number, number] }) => {
-    const [ax, ay] = a.toNumbers();
-    const [bx, by] = b.toNumbers();
-    return !(Math.hypot(ax, ay) < 4.3 && Math.hypot(bx, by) < 4.3);
-  };
-  const { mesh } = liftVault(full, solution.faces, {
-    arcSegments: 2,
-    rampSegments: 1,
-    closeBoundary: openCentre,
+function initPicker(): void {
+  document.querySelectorAll('.pick').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const i = Number((btn as HTMLElement).dataset.pick);
+      if (pickerCache.has(i)) {
+        renderPick(i);
+        return;
+      }
+      document.querySelector('#pick-above')!.innerHTML = '<p class="caption">raising the vault…</p>';
+      document.querySelector('#pick-below')!.innerHTML = '';
+      setTimeout(() => renderPick(i), 30);
+    });
   });
-
-  return `<section>
-    <h2>The vault</h2>
-    <p class="caption">The Takht-i Sulaymān muqarnas, standing — the plate's plan read by
-    the solver (crown-rim reach ${solution.graphReach}, the published regular-centre
-    count) and raised cell by cell, intermediate by intermediate: al-Kāshī's profile on
-    every curved side, ${mesh.triangles.length / 3} triangles, closed but for the
-    springing, the crown ring awaiting its crowning element, and the vertical seams where
-    walls of a real vault meet. Left: from above, the mountain nobody was meant to see.
-    Right: from below — the view it was built for, seven centuries after its drawing was
-    left in a pantry floor.</p>
-    <div class="row">
-      <figure class="figure" style="flex:0 1 480px">
-        ${meshIsoSvg(mesh)}
-        <figcaption>From above: the stepped corbelling, corner-started, tier on tier.</figcaption>
-      </figure>
-      <figure class="figure" style="flex:0 1 480px">
-        ${meshIsoSvg(mesh, { fromBelow: true })}
-        <figcaption>From below: cells, ridges, and the crown ring. The lighting language
-        comes with the render package — this is geometry, verified.</figcaption>
-      </figure>
-    </div>
-  </section>`;
+  const { report } = pickerCompute();
+  const initial = report.solutions.findIndex((s) => s.graphReach === 17);
+  renderPick(initial >= 0 ? initial : 0);
 }
 
 /* ---------- the lift, seen ---------- */
@@ -428,8 +465,9 @@ app.innerHTML = `<main>
   ${profileHtml()}
   ${curvedHtml()}
   ${takhtHtml()}
-  ${solverHtml()}
-  ${vaultHtml()}
+  ${pickerHtml()}
   ${planHtml()}
   ${liftHtml()}
 </main>`;
+
+initPicker();

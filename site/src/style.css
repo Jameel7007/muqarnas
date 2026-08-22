@@ -149,3 +149,30 @@ h2 {
 .status.bad {
   color: #c98a7d;
 }
+
+.picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.4rem;
+}
+
+.pick {
+  background: var(--card);
+  color: var(--dim);
+  border: 1px solid var(--rule);
+  padding: 0.45rem 0.85rem;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.pick:hover {
+  color: var(--ink);
+}
+
+.pick.active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
