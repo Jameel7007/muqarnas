@@ -9,8 +9,17 @@ import {
   planToSvg,
   validatePlan,
 } from '@muqarnas/plan';
-import { PLATE_FIELD_SPAN, takhtPlate } from '@muqarnas/plan';
-import { gridVaultLifted, manifoldReport } from '@muqarnas/lift';
+import {
+  Iso,
+  PLATE_FIELD_SPAN,
+  element,
+  measureCurved,
+  place,
+  pt,
+  takhtPlate,
+  type Plan,
+} from '@muqarnas/plan';
+import { gridVaultLifted, liftCurvedCells, manifoldReport, surfaceArea } from '@muqarnas/lift';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 
@@ -173,15 +182,9 @@ function takhtHtml(): string {
   </section>`;
 }
 
-/* ---------- the lift, seen ---------- */
+/* ---------- shared mesh viewer: painter-sorted flat shading ---------- */
 
-function liftHtml(): string {
-  const { vault } = gridVaultLifted();
-  const { mesh, tris } = vault;
-  const report = manifoldReport(mesh);
-  const watertight = report.nonManifoldEdges.length === 0;
-
-  // Isometric-ish projection with a painter's sort — verification, not rendering.
+function meshIsoSvg(mesh: { positions: number[]; triangles: number[] }): string {
   const az = Math.PI / 5.2; // view azimuth
   const P = (x: number, y: number, z: number): [number, number, number] => {
     const rx = x * Math.cos(az) - y * Math.sin(az);
@@ -194,9 +197,10 @@ function liftHtml(): string {
     return [l[0] / n, l[1] / n, l[2] / n] as const;
   })();
 
-  type Face = { d: string; depth: number; shade: number; role: string };
+  type Face = { d: string; depth: number; shade: number };
   const faces: Face[] = [];
-  for (let t = 0; t < tris.length; t++) {
+  const triCount = mesh.triangles.length / 3;
+  for (let t = 0; t < triCount; t++) {
     const [ia, ib, ic] = [mesh.triangles[t * 3]!, mesh.triangles[t * 3 + 1]!, mesh.triangles[t * 3 + 2]!];
     const v = (i: number) => [mesh.positions[i * 3]!, mesh.positions[i * 3 + 1]!, mesh.positions[i * 3 + 2]!] as const;
     const [a, b, c] = [v(ia), v(ib), v(ic)];
@@ -213,12 +217,10 @@ function liftHtml(): string {
       d: `M${pa[0].toFixed(3)} ${pa[1].toFixed(3)} L${pb[0].toFixed(3)} ${pb[1].toFixed(3)} L${pc[0].toFixed(3)} ${pc[1].toFixed(3)} Z`,
       depth: (pa[2] + pb[2] + pc[2]) / 3,
       shade: lam,
-      role: tris[t]!.role,
     });
   }
   faces.sort((p, q) => p.depth - q.depth);
 
-  // fit
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   for (let i = 0; i < mesh.positions.length; i += 3) {
     const [sx, sy] = P(mesh.positions[i]!, mesh.positions[i + 1]!, mesh.positions[i + 2]!);
@@ -234,6 +236,67 @@ function liftHtml(): string {
       return `<path d="${f.d}" fill="${rgb}" stroke="rgba(20,18,14,0.35)" stroke-width="0.008"/>`;
     })
     .join('\n    ');
+  return `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg">
+    ${paths}
+  </svg>`;
+}
+
+/* ---------- the curved cell ---------- */
+
+function curvedHtml(): string {
+  const sq = element('square');
+  const single: Plan = { sector: [...sq.verts], placed: [place('square', 'cell', Iso.IDENTITY, 1)] };
+  const cell = liftCurvedCells(single, [{ placedIndex: 0, centralNode: 0 }], {
+    arcSegments: 20,
+    rampSegments: 8,
+  });
+  const meshArea = surfaceArea(cell.mesh);
+  const his = measureCurved({ cells: { square: 1 } }).total;
+  const dev = ((meshArea - his) / his) * 100;
+
+  const crownPlan: Plan = {
+    sector: [pt(-1, -1), pt(1, -1), pt(1, 1), pt(-1, 1)],
+    placed: [0, 2, 4, 6].map((k) => place('square', 'cell', Iso.rotation(k), 1)),
+  };
+  const crown = liftCurvedCells(
+    crownPlan,
+    crownPlan.placed.map((_, i) => ({ placedIndex: i, centralNode: 0 })),
+    { arcSegments: 16, rampSegments: 6 },
+  );
+  const crownReport = manifoldReport(crown.mesh);
+
+  return `<section>
+    <h2>The curved cell</h2>
+    <p class="caption">The profile made flesh. A cell stands on its plan shape with its
+    apex at the central node: two vertical facets on the backside edges (height = the
+    factor), and a roof of two cylinder panels — al-Kāshī's curve carried along each
+    curved side, extruded parallel to the facet — meeting on the ridge over the diameter,
+    the "main diagonal" the historical plans draw. Left: one cell on a square. Right:
+    four cells closing around a shared apex, boundary only at the springing —
+    ${crownReport.nonManifoldEdges.length === 0 ? 'watertight' : 'NOT watertight'}, a
+    miniature vault.</p>
+    <span class="status ok">oracle: mesh ${meshArea.toFixed(4)} vs al-Kāshī ${his.toFixed(4)}
+    (2 × 1;43,33,45,41) · +${dev.toFixed(1)}% — his "average depth one" trick, quantified</span>
+    <div class="row">
+      <figure class="figure" style="flex:0 1 360px">
+        ${meshIsoSvg(cell.mesh)}
+        <figcaption>One curved cell on a square: facets, cylinder panels, ridge.</figcaption>
+      </figure>
+      <figure class="figure" style="flex:0 1 420px">
+        ${meshIsoSvg(crown.mesh)}
+        <figcaption>A crown group: four cells, one welded apex, closed to the springing.</figcaption>
+      </figure>
+    </div>
+  </section>`;
+}
+
+/* ---------- the lift, seen ---------- */
+
+function liftHtml(): string {
+  const { vault } = gridVaultLifted();
+  const { mesh } = vault;
+  const report = manifoldReport(mesh);
+  const watertight = report.nonManifoldEdges.length === 0;
 
   return `<section>
     <h2>The lift, simple type</h2>
@@ -245,9 +308,7 @@ function liftHtml(): string {
     <span class="status ${watertight ? 'ok' : 'bad'}">manifold ${watertight ? '✓' : '✗'} · ${mesh.triangles.length / 3} triangles · ${mesh.positions.length / 3} welded vertices</span>
     <div class="row">
       <figure class="figure" style="flex:0 1 640px">
-        <svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg">
-          ${paths}
-        </svg>
+        ${meshIsoSvg(mesh)}
         <figcaption>Painter-sorted flat shading, straight from the mesh — a verification
         view, not the lighting language. From-below and the real materials come with the
         render package.</figcaption>
@@ -263,6 +324,7 @@ app.innerHTML = `<main>
   </header>
   ${galleryHtml()}
   ${profileHtml()}
+  ${curvedHtml()}
   ${takhtHtml()}
   ${planHtml()}
   ${liftHtml()}

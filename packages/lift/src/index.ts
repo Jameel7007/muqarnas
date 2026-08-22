@@ -17,3 +17,13 @@ export {
   type LiftedVault,
 } from './simple.js';
 export { gridVaultLifted } from './demo.js';
+export {
+  liftCurvedCells,
+  profileHeight,
+  profileSegments,
+  CELL_HEIGHT,
+  DEFAULT_CURVED_PARAMS,
+  type CurvedCellSpec,
+  type CurvedLiftParams,
+  type CurvedVault,
+} from './curved.js';
