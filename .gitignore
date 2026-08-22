@@ -1,0 +1,9 @@
+# dependencies / build
+node_modules/
+dist/
+
+# source scans stay local, never in the repo (governing principle 4)
+*.pdf
+
+# os / editor
+.DS_Store
