@@ -34,3 +34,4 @@ export {
   type SolverReport,
   type SolverOptions,
 } from './solver.js';
+export { liftVault, type VaultFaceSpec, type VaultLiftOptions } from './curved.js';

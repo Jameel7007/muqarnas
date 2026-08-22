@@ -45,8 +45,10 @@ export interface CellSpec {
 }
 
 export interface LiftedTriangle {
-  readonly role: 'facet' | 'roof';
-  readonly cell: number; // index into the specs array
+  readonly role: 'facet' | 'roof' | 'wall';
+  readonly cell: number; // index into the specs array (-1 for joint geometry)
+  /** debug provenance of the emission */
+  readonly src?: string;
 }
 
 export interface LiftedVault {

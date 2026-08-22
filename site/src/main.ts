@@ -24,6 +24,7 @@ import {
   enumerateAssignments,
   gridVaultLifted,
   liftCurvedCells,
+  liftVault,
   manifoldReport,
   surfaceArea,
 } from '@muqarnas/lift';
@@ -191,15 +192,20 @@ function takhtHtml(): string {
 
 /* ---------- shared mesh viewer: painter-sorted flat shading ---------- */
 
-function meshIsoSvg(mesh: { positions: number[]; triangles: number[] }): string {
+function meshIsoSvg(
+  mesh: { positions: number[]; triangles: number[] },
+  view: { fromBelow?: boolean } = {},
+): string {
   const az = Math.PI / 5.2; // view azimuth
-  const P = (x: number, y: number, z: number): [number, number, number] => {
+  const zs = view.fromBelow ? -1 : 1;
+  const P = (x: number, y: number, zRaw: number): [number, number, number] => {
+    const z = zRaw * zs;
     const rx = x * Math.cos(az) - y * Math.sin(az);
     const ry = x * Math.sin(az) + y * Math.cos(az);
     return [rx, ry * 0.5 - z * 0.72, ry + z]; // [screen x, screen y (down), depth]
   };
   const light = (() => {
-    const l = [-0.45, 0.35, 0.82] as const;
+    const l = view.fromBelow ? ([-0.35, 0.25, -0.9] as const) : ([-0.45, 0.35, 0.82] as const);
     const n = Math.hypot(...l);
     return [l[0] / n, l[1] / n, l[2] / n] as const;
   })();
@@ -218,7 +224,7 @@ function meshIsoSvg(mesh: { positions: number[]; triangles: number[] }): string 
     let nz = u[0]! * w[1]! - u[1]! * w[0]!;
     const nl = Math.hypot(nx, ny, nz) || 1;
     nx /= nl; ny /= nl; nz /= nl;
-    const lam = Math.max(0, nx * light[0] + ny * light[1] + nz * light[2]);
+    const lam = Math.abs(nx * light[0] + ny * light[1] + nz * light[2]);
     const pa = P(...a); const pb = P(...b); const pc = P(...c);
     faces.push({
       d: `M${pa[0].toFixed(3)} ${pa[1].toFixed(3)} L${pb[0].toFixed(3)} ${pb[1].toFixed(3)} L${pc[0].toFixed(3)} ${pc[1].toFixed(3)} Z`,
@@ -341,6 +347,51 @@ function solverHtml(): string {
   </section>`;
 }
 
+/* ---------- the vault ---------- */
+
+function vaultHtml(): string {
+  const full = takhtPlateFull();
+  const symmetries = [0, 2, 4, 6].flatMap((k) => [
+    Iso.rotation(k),
+    Iso.reflection(2).then(Iso.rotation(k)),
+  ]);
+  const report = enumerateAssignments(full, { maxFreeOrbits: 20, symmetries });
+  const solution = report.solutions.find((s) => s.graphReach === 17) ?? report.solutions[0]!;
+  const openCentre = (a: { toNumbers(): [number, number] }, b: { toNumbers(): [number, number] }) => {
+    const [ax, ay] = a.toNumbers();
+    const [bx, by] = b.toNumbers();
+    return !(Math.hypot(ax, ay) < 4.3 && Math.hypot(bx, by) < 4.3);
+  };
+  const { mesh } = liftVault(full, solution.faces, {
+    arcSegments: 2,
+    rampSegments: 1,
+    closeBoundary: openCentre,
+  });
+
+  return `<section>
+    <h2>The vault</h2>
+    <p class="caption">The Takht-i Sulaymān muqarnas, standing — the plate's plan read by
+    the solver (crown-rim reach ${solution.graphReach}, the published regular-centre
+    count) and raised cell by cell, intermediate by intermediate: al-Kāshī's profile on
+    every curved side, ${mesh.triangles.length / 3} triangles, closed but for the
+    springing, the crown ring awaiting its crowning element, and the vertical seams where
+    walls of a real vault meet. Left: from above, the mountain nobody was meant to see.
+    Right: from below — the view it was built for, seven centuries after its drawing was
+    left in a pantry floor.</p>
+    <div class="row">
+      <figure class="figure" style="flex:0 1 480px">
+        ${meshIsoSvg(mesh)}
+        <figcaption>From above: the stepped corbelling, corner-started, tier on tier.</figcaption>
+      </figure>
+      <figure class="figure" style="flex:0 1 480px">
+        ${meshIsoSvg(mesh, { fromBelow: true })}
+        <figcaption>From below: cells, ridges, and the crown ring. The lighting language
+        comes with the render package — this is geometry, verified.</figcaption>
+      </figure>
+    </div>
+  </section>`;
+}
+
 /* ---------- the lift, seen ---------- */
 
 function liftHtml(): string {
@@ -378,6 +429,7 @@ app.innerHTML = `<main>
   ${curvedHtml()}
   ${takhtHtml()}
   ${solverHtml()}
+  ${vaultHtml()}
   ${planHtml()}
   ${liftHtml()}
 </main>`;

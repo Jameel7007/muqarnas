@@ -230,3 +230,356 @@ export function profileSegments(params: CurvedLiftParams = {}): number {
     (params.rampSegments ?? DEFAULT_CURVED_PARAMS.rampSegments)
   );
 }
+
+/* ====================================================================== *
+ *  THE FULL VAULT: solver output → watertight multi-tier mesh
+ * ====================================================================== */
+
+/**
+ * One face of a solved assignment (structurally identical to the solver's
+ * SolvedFace): what the face is, where its pivot sits, which tier.
+ */
+export interface VaultFaceSpec {
+  readonly placedIndex: number;
+  readonly type: 'cell' | 'intermediate';
+  readonly centralNode: number;
+  readonly tier: number;
+}
+
+export interface VaultLiftOptions extends CurvedLiftParams {
+  /**
+   * Whether a boundary edge gets a closure wall down to the springing.
+   * Default: close everything (pass a predicate to keep e.g. the crown rim
+   * open).
+   */
+  readonly closeBoundary?: (a: Pt, b: Pt) => boolean;
+}
+
+/**
+ * Lift a whole solved vault:
+ *
+ * - CELLS as in liftCurvedCells: two facets on the backside path, two
+ *   cylinder roof panels meeting over the diameter.
+ * - INTERMEDIATES as the cell construction inverted (al-Kāshī: "a curved
+ *   surface in the form of a triangle or two triangles"): the two curved
+ *   sides carry the same profile rising from the tail — which sits exactly
+ *   on top of the neighbouring cells' shared facet corner, at factor
+ *   height — to the heads at the tier top; panels sweep parallel to the
+ *   fronts, whose flat top edges are where the next tier's facets stand.
+ * - RISER BANDS close the joints the tier structure leaves: between a
+ *   lower crease (the shared profile of the faces below) and the straight
+ *   line of an upper facet bottom or intermediate front; and, when
+ *   requested, from the springing (z = 0) up to whatever the vault does
+ *   along a boundary edge.
+ *
+ * Everything welds by construction: one u-schedule, one tag scheme
+ * (`Z<m>` for tier levels, `P<tier>:<k>` for profile samples), exact
+ * ℚ(√2) sample points.
+ */
+export function liftVault(
+  plan: Plan,
+  specs: readonly VaultFaceSpec[],
+  opts: VaultLiftOptions = {},
+): CurvedVault {
+  const arcSegments = opts.arcSegments ?? DEFAULT_CURVED_PARAMS.arcSegments;
+  const rampSegments = opts.rampSegments ?? DEFAULT_CURVED_PARAMS.rampSegments;
+  const us = uSchedule(arcSegments, rampSegments);
+  const K = us.length - 1;
+  const uNum = us.map((f) => f.toNumber());
+
+  const b = new MeshBuilder();
+  const tris: LiftedTriangle[] = [];
+
+  const zTag = (tier: number, k: number) => (k === K ? `Z${tier}` : `P${tier}:${k}`);
+  const vAt = (p: Pt, tag: string, z: number) => {
+    const [x, y] = p.toNumbers();
+    return b.vertex(`${p.key()}@${tag}`, x, y, z);
+  };
+  const vLevel = (p: Pt, m: number) => vAt(p, `Z${m}`, m * CELL_HEIGHT);
+
+  interface SideUse {
+    spec: VaultFaceSpec;
+    curved: boolean;
+    /** the face's CCW traversal of this edge — panels and facets follow it,
+     *  so closures orient against it structurally */
+    from: Pt;
+    to: Pt;
+    /** for curved sides: the tail (low) endpoint */
+    tail?: Pt;
+    head?: Pt;
+  }
+  const edgeUses = new Map<string, { a: Pt; b: Pt; uses: SideUse[] }>();
+  const noteEdge = (va: Pt, vb: Pt, use: SideUse) => {
+    const ka = va.key();
+    const kb = vb.key();
+    const key = ka < kb ? `${ka}~${kb}` : `${kb}~${ka}`;
+    let e = edgeUses.get(key);
+    if (!e) {
+      e = { a: ka < kb ? va : vb, b: ka < kb ? vb : va, uses: [] };
+      edgeUses.set(key, e);
+    }
+    e.uses.push(use);
+  };
+
+  interface Gen {
+    q: Pt;
+    r: Pt;
+    z: number;
+    k: number;
+  }
+  /** Generators for a panel: from the curved side (tail→head) to the ridge. */
+  const generators = (
+    tail: Pt,
+    head: Pt,
+    genDir: Pt, // direction of the generators (towards the ridge)
+    ridgeA: Pt,
+    ridgeB: Pt,
+    zBase: number,
+  ): Gen[] => {
+    const side = head.sub(tail);
+    const ridgeDir = ridgeB.sub(ridgeA);
+    return us.map((uf, k) => {
+      const q = tail.add(side.scale(Q2.of(uf)));
+      let r: Pt;
+      if (q.eq(ridgeA)) r = ridgeA;
+      else if (q.eq(ridgeB)) r = ridgeB;
+      else r = lineIntersect(q, genDir, ridgeA, ridgeDir);
+      return { q, r, z: zBase + profileHeight(uNum[k]!), k };
+    });
+  };
+
+  const emitStrips = (
+    gens: Gen[],
+    tier: number,
+    role: LiftedTriangle['role'],
+    cellIdx: number,
+  ) => {
+    // orient by projected winding, measured at the first generator whose
+    // foot and ridge point differ (cells degenerate at the apex end,
+    // intermediates at the tail end)
+    const m = gens.findIndex((g) => !g.q.eq(g.r));
+    const gm = gens[m]!;
+    const gn = gens[m + 1 <= K ? m + 1 : m - 1]!;
+    const [q0x, q0y] = gm.q.toNumbers();
+    const [r0x, r0y] = gm.r.toNumbers();
+    const [q1x, q1y] = gn.q.toNumbers();
+    let sign = (r0x - q0x) * (q1y - q0y) - (r0y - q0y) * (q1x - q0x);
+    if (m + 1 > K) sign = -sign;
+    const flip = sign < 0;
+    for (let k = 0; k + 1 < gens.length; k++) {
+      const ga = gens[k]!;
+      const gb = gens[k + 1]!;
+      const qa = vAt(ga.q, zTag(tier, ga.k), ga.z);
+      const ra = vAt(ga.r, zTag(tier, ga.k), ga.z);
+      const qb = vAt(gb.q, zTag(tier, gb.k), gb.z);
+      const rb = vAt(gb.r, zTag(tier, gb.k), gb.z);
+      const degenerateA = qa === ra;
+      const degenerateB = qb === rb;
+      if (degenerateA && degenerateB) continue;
+      if (degenerateB) {
+        if (flip) b.tri(qa, qb, ra);
+        else b.tri(qa, ra, qb);
+        tris.push({ role, cell: cellIdx });
+      } else if (degenerateA) {
+        if (flip) b.tri(qa, qb, rb);
+        else b.tri(qa, rb, qb);
+        tris.push({ role, cell: cellIdx });
+      } else {
+        if (flip) b.quad(qa, qb, rb, ra);
+        else b.quad(qa, ra, rb, qb);
+        tris.push({ role, cell: cellIdx }, { role, cell: cellIdx });
+      }
+    }
+  };
+
+  const outlineOf = (spec: VaultFaceSpec) => {
+    const placed = plan.placed[spec.placedIndex];
+    if (!placed) throw new Error(`liftVault: no placed element at ${spec.placedIndex}`);
+    return { placed, outline: worldOutline(placed) };
+  };
+
+  /* ---------- pass 1: cells and intermediates ---------- */
+  specs.forEach((spec, cellIdx) => {
+    const { outline } = outlineOf(spec);
+    const verts = outline.verts;
+    const n = verts.length;
+    const c = spec.centralNode;
+    const C = verts[c]!;
+    const A1 = verts[(c + 1) % n]!;
+    const A2 = verts[(c - 1 + n) % n]!;
+    const tier = spec.tier;
+    const zBase = (tier - 1) * CELL_HEIGHT;
+
+    if (spec.type === 'cell') {
+      const Cop = n === 4 ? verts[(c + 2) % n]! : A1.add(A2).scale(Q2.HALF);
+      // facets — two back-to-back cells emit coincident quads deliberately:
+      // one physical wall, both faces visible
+      for (const [fa, fb] of [
+        [A1, Cop],
+        [Cop, A2],
+      ] as const) {
+        const i0 = vLevel(fa, tier - 1);
+        const i1 = vLevel(fb, tier - 1);
+        const i2 = vAt(fb, zTag(tier, 0), zBase + GH);
+        const i3 = vAt(fa, zTag(tier, 0), zBase + GH);
+        b.quad(i0, i1, i2, i3);
+        tris.push({ role: 'facet', cell: cellIdx }, { role: 'facet', cell: cellIdx });
+      }
+      // roof panels: curved sides A→C (tail A, head C = apex)
+      const pa = generators(A1, C, Cop.sub(A1), C, Cop, zBase);
+      const pb = generators(A2, C, Cop.sub(A2), C, Cop, zBase);
+      for (let k = 0; k <= K; k++) {
+        if (!pa[k]!.r.eq(pb[k]!.r)) throw new Error('liftVault: cell ridge mismatch');
+      }
+      emitStrips(pa, tier, 'roof', cellIdx);
+      emitStrips(pb, tier, 'roof', cellIdx);
+      noteEdge(A1, C, { spec, curved: true, from: C, to: A1, tail: A1, head: C });
+      noteEdge(A2, C, { spec, curved: true, from: A2, to: C, tail: A2, head: C });
+      if (n === 4) {
+        noteEdge(A1, Cop, { spec, curved: false, from: A1, to: Cop });
+        noteEdge(A2, Cop, { spec, curved: false, from: Cop, to: A2 });
+      } else {
+        noteEdge(A1, A2, { spec, curved: false, from: A1, to: A2 });
+      }
+    } else {
+      // intermediate: curved sides C→A (tail C = the low point), fronts on
+      // the backside path at the tier top
+      if (n === 4) {
+        const Kv = verts[(c + 2) % n]!;
+        const pa = generators(C, A1, Kv.sub(A1), C, Kv, zBase);
+        const pb = generators(C, A2, Kv.sub(A2), C, Kv, zBase);
+        for (let k = 0; k <= K; k++) {
+          if (!pa[k]!.r.eq(pb[k]!.r)) throw new Error('liftVault: intermediate ridge mismatch');
+        }
+        emitStrips(pa, tier, 'roof', cellIdx);
+        emitStrips(pb, tier, 'roof', cellIdx);
+        noteEdge(A1, Kv, { spec, curved: false, from: A1, to: Kv });
+        noteEdge(A2, Kv, { spec, curved: false, from: Kv, to: A2 });
+      } else {
+        const pa = generators(C, A1, A2.sub(A1), C, A2, zBase);
+        emitStrips(pa, tier, 'roof', cellIdx);
+        noteEdge(A1, A2, { spec, curved: false, from: A1, to: A2 });
+      }
+      noteEdge(C, A1, { spec, curved: true, from: C, to: A1, tail: C, head: A1 });
+      noteEdge(C, A2, { spec, curved: true, from: A2, to: C, tail: C, head: A2 });
+    }
+  });
+
+  /* ---------- pass 2: riser bands and boundary closures ----------
+   *
+   * Orientation is structural, not searched: panels and facets always
+   * traverse their plan edges in face-CCW order (the projected-CCW rule
+   * guarantees it), so every closure winds against the traversal of the
+   * face that owns its open side. Vertical side edges follow the canonical
+   * subdivision (tier levels, facet heights) so closures weld edge-for-edge.
+   */
+
+  /**
+   * band between a crease polyline and a straight segment at level segLevel,
+   * in the edge's vertical plane
+   */
+  const emitBand = (cu: SideUse, segLevel: number, cellIdx: number) => {
+    const creaseTier = cu.spec.tier;
+    const creaseTail = cu.tail!;
+    const creaseHead = cu.head!;
+    const zBase = (creaseTier - 1) * CELL_HEIGHT;
+    const side = creaseHead.sub(creaseTail);
+    const poly: number[] = us.map((uf, k) => {
+      const q = creaseTail.add(side.scale(Q2.of(uf)));
+      return vAt(q, zTag(creaseTier, k), zBase + profileHeight(uNum[k]!));
+    });
+    const segStart = vLevel(creaseTail, segLevel);
+    const segEnd = vLevel(creaseHead, segLevel);
+    // the owning panel traverses the crease (from → to); the band opposes it,
+    // so it ascends tail→head exactly when the panel runs head→tail
+    const flip = cu.from.eq(creaseTail);
+    const fan = (x: number, y: number, z: number) => {
+      if (x === y || y === z || x === z) return;
+      if (flip) b.tri(x, z, y);
+      else b.tri(x, y, z);
+      tris.push({ role: 'wall', cell: cellIdx, src: `band:${creaseTier}:${segLevel}` });
+    };
+    for (let k = 0; k + 1 < poly.length; k++) fan(segStart, poly[k]!, poly[k + 1]!);
+    if (segEnd !== poly[poly.length - 1]!) {
+      // closing region spans a full tier at the head: split its vertical at
+      // the facet height so it welds with facet corners and wall stacks
+      const mid = vAt(creaseHead, zTag(creaseTier, 0), zBase + GH);
+      fan(segStart, poly[poly.length - 1]!, mid);
+      fan(segStart, mid, segEnd);
+    }
+  };
+
+  /**
+   * vertical wall between two tier levels over an edge, one tier at a time,
+   * each tier split at its facet height; `from → to` is the traversal of the
+   * face owning the wall's open top (its facet bottom or front top runs that
+   * way, so the stack's top edge opposes it)
+   */
+  const emitWallStack = (from: Pt, to: Pt, loLevel: number, hiLevel: number, cellIdx: number) => {
+    for (let m = loLevel; m < hiLevel; m++) {
+      const z0 = m * CELL_HEIGHT;
+      const a0 = vLevel(from, m);
+      const b0 = vLevel(to, m);
+      const aF = vAt(from, zTag(m + 1, 0), z0 + GH);
+      const bF = vAt(to, zTag(m + 1, 0), z0 + GH);
+      const a1 = vLevel(from, m + 1);
+      const b1 = vLevel(to, m + 1);
+      b.quad(a0, b0, bF, aF);
+      b.quad(aF, bF, b1, a1);
+      tris.push(
+        { role: 'wall', cell: cellIdx, src: 'stack' },
+        { role: 'wall', cell: cellIdx, src: 'stack' },
+        { role: 'wall', cell: cellIdx, src: 'stack' },
+        { role: 'wall', cell: cellIdx, src: 'stack' },
+      );
+    }
+  };
+
+  const closeBoundary = opts.closeBoundary ?? (() => true);
+
+  for (const e of edgeUses.values()) {
+    const curvedUses = e.uses.filter((u) => u.curved);
+    const flatUses = e.uses.filter((u) => !u.curved);
+    if (curvedUses.length === 2) {
+      const [u1, u2] = curvedUses;
+      if (u1!.spec.tier !== u2!.spec.tier || !u1!.tail!.eq(u2!.tail!)) {
+        throw new Error('liftVault: curve-to-curve joint with mismatched tiers or tails');
+      }
+      continue; // welded by construction
+    }
+    if (curvedUses.length === 1) {
+      const cu = curvedUses[0]!;
+      const creaseTier = cu.spec.tier;
+      if (flatUses.length === 1) {
+        // back-on-curve: upper straight line over the lower crease
+        const fu = flatUses[0]!;
+        const level = fu.spec.type === 'cell' ? fu.spec.tier - 1 : fu.spec.tier;
+        emitBand(cu, level, -1);
+      } else if (flatUses.length === 0) {
+        // boundary crease: wall stack to the tier base, band up to the crease
+        if (closeBoundary(e.a, e.b)) {
+          emitWallStack(cu.from, cu.to, 0, creaseTier - 1, -1);
+          emitBand(cu, creaseTier - 1, -1);
+        }
+      }
+      continue;
+    }
+    // no curved use
+    if (flatUses.length === 2) {
+      const [f1, f2] = flatUses;
+      const lv = (u: SideUse) => (u.spec.type === 'cell' ? u.spec.tier - 1 : u.spec.tier);
+      const l1 = lv(f1!);
+      const l2 = lv(f2!);
+      if (l1 !== l2) {
+        const upper = l1 > l2 ? f1! : f2!;
+        emitWallStack(upper.from, upper.to, Math.min(l1, l2), Math.max(l1, l2), -1);
+      }
+    } else if (flatUses.length === 1) {
+      const fu = flatUses[0]!;
+      const lv = fu.spec.type === 'cell' ? fu.spec.tier - 1 : fu.spec.tier;
+      if (lv !== 0 && closeBoundary(e.a, e.b)) emitWallStack(fu.from, fu.to, 0, lv, -1);
+    }
+  }
+
+  return { mesh: b.build(), tris };
+}

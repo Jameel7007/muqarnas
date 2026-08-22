@@ -16,6 +16,7 @@ export interface Mesh {
 
 export class MeshBuilder {
   private readonly indexByKey = new Map<string, number>();
+  private readonly directed = new Map<string, number>();
   readonly positions: number[] = [];
   readonly triangles: number[] = [];
 
@@ -30,6 +31,14 @@ export class MeshBuilder {
 
   tri(a: number, b: number, c: number): void {
     this.triangles.push(a, b, c);
+    this.directed.set(`${a}>${b}`, (this.directed.get(`${a}>${b}`) ?? 0) + 1);
+    this.directed.set(`${b}>${c}`, (this.directed.get(`${b}>${c}`) ?? 0) + 1);
+    this.directed.set(`${c}>${a}`, (this.directed.get(`${c}>${a}`) ?? 0) + 1);
+  }
+
+  /** How many existing triangles traverse the directed edge a→b. */
+  directedCount(a: number, b: number): number {
+    return this.directed.get(`${a}>${b}`) ?? 0;
   }
 
   quad(a: number, b: number, c: number, d: number): void {
