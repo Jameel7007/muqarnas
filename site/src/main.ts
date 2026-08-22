@@ -9,6 +9,7 @@ import {
   planToSvg,
   validatePlan,
 } from '@muqarnas/plan';
+import { PLATE_FIELD_SPAN, takhtPlate } from '@muqarnas/plan';
 import { gridVaultLifted, manifoldReport } from '@muqarnas/lift';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
@@ -137,6 +138,41 @@ function planHtml(): string {
   </section>`;
 }
 
+/* ---------- the Takht-i Sulaymān plate ---------- */
+
+function takhtHtml(): string {
+  const plan = takhtPlate();
+  const v = validatePlan(plan);
+  const census: Record<string, number> = {};
+  for (const p of plan.placed) census[p.def.kind] = (census[p.def.kind] ?? 0) + 1;
+  const censusLine = Object.entries(census)
+    .map(([k, n]) => `${n} ${k}${n === 1 ? '' : k.endsWith('s') ? 'es' : 's'}`)
+    .join(' · ');
+  return `<section>
+    <h2>The Takht-i Sulaymān plate</h2>
+    <p class="caption">The oldest known muqarnas plan: a quarter-vault ground plan incised
+    on a 50 cm gypsum plate found in the Ilkhanid palace ruins (before ca. 1276), here
+    assembled from the element alphabet with the arrangement digitized from the vector
+    line work of Harmsen's reading. The vault centre is the cut corner, upper right; the
+    plan is symmetric about the diagonal through it. And one discovery the exact
+    arithmetic forced: the incised design does not quite close — its regular content
+    spans 7&#8202;+&#8202;3.5√2 ≈ ${PLATE_FIELD_SPAN.toNumber().toFixed(4)} modules against the plate's
+    12, the ≈1.8 mm excess hidden in a bent band of semi-regular quadrangles through the
+    central star. Regularized (as the excavated unit-regular cells demand), it covers
+    exactly.</p>
+    <span class="status ${v.ok ? 'ok' : 'bad'}">${v.ok ? 'exact cover ✓' : 'INVALID'} · ${plan.placed.length} elements · ${censusLine} · area = 61 + 47√2</span>
+    <div class="row">
+      <figure class="figure" style="flex:0 1 640px">
+        ${planToSvg(plan, { width: 620, colorBy: 'kind' })}
+        <figcaption>Six half eight-pointed stars on the walls, the full star at the
+        middle, four four-square combinations, jug composites on the diagonal, and the
+        crown bite at the centre. Same plan language as everything above — a building
+        seen from above.</figcaption>
+      </figure>
+    </div>
+  </section>`;
+}
+
 /* ---------- the lift, seen ---------- */
 
 function liftHtml(): string {
@@ -227,6 +263,7 @@ app.innerHTML = `<main>
   </header>
   ${galleryHtml()}
   ${profileHtml()}
+  ${takhtHtml()}
   ${planHtml()}
   ${liftHtml()}
 </main>`;

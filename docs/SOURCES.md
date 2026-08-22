@@ -42,12 +42,23 @@ Detailed extraction notes with page citations: `muqarnas-sources/extraction-note
 - **Tier heights** — curved type: 2 modules (the element height); simple:
   facet ≈ 1 module, roof rise a fitting parameter; clay-plastered: unequal
   tier heights, some rooms roof-only.
+- **The Takht-i Sulaymān quarter plan** (`takht.ts` + generated
+  `takht-plate-data.ts`) — 157 elements (61 squares, 90 rhombi, 2 jugs,
+  4 half-rhombi), digitized from the vector line work of Harmsen fig.
+  5.17(a) by `tools/digitize-plate.mjs`, exact cover verified, area exactly
+  61 + 47√2, symmetric about the diagonal. Two documented departures:
+  (1) regularization — the incised design hides a misfit of Δ = 5 − 3.5√2
+  ≈ 0.0503 modules (≈ 1.8 mm on the plate) in a bent band of semi-regular
+  quadrangles through the central star; the regular field is 7 + 3.5√2, not
+  12, and the excavated unit-regular cells argue the vault used the regular
+  plan; (2) one diagonal hexagon completed as two rhombi by restoring its
+  missing drawn edge at the "six rhombi join" removable node.
 
 ## Still open
 
 | Item | State | Next |
 | --- | --- | --- |
-| Takht-i Sulaymān quarter plan | structure known (12×12 field; half-stars A1,C1,E1,G3,G6,G9; star D5; four-square combos A3,C3,E6,E9; diagonal hexagons → square+jug+2 half-rhombi; DS&H 12-tier reading) | digitize figs. 7–9 / Harmsen fig. 5.17 element by element into `takht.ts` |
+| Takht-i Sulaymān tier assignment | plan done (see above); DS&H's preferred 12-tier reading known in outline (2005 fig. 9 right; two removed diagonal nodes) | encode tiers once the graph solver exists |
 | Curved (qawsī) lift | cell anatomy understood: two facets on backside edges, roof panels meeting over the diameter, sides = the profile | implement after the plate plan |
 | Tier-assignment solver | Harmsen ch. 3 rules extracted (graph, acyclic heights, R1–R4, orbits = the ambiguity) | implement `enumerateAssignments` |
 | Barley kernel | defined (kite, two opposite equal obtuse angles, short sides = module, diameter free) | construct parametrically with the curved lift |
