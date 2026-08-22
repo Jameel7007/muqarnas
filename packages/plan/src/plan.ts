@@ -50,13 +50,28 @@ export function worldEdgeIndex(p: PlacedElement, edgeIndex: number): number {
 }
 
 /** World-space outline, CCW regardless of whether the placement reflects. */
-export function worldOutline(p: PlacedElement): { verts: Pt[]; curvedEdges: number[] } {
+export function worldOutline(p: PlacedElement): {
+  verts: Pt[];
+  curvedSides: [number, number] | null;
+  centralNode: number | null;
+} {
   const verts = p.def.verts.map((v) => p.iso.apply(v));
-  if (p.iso.isDirect()) return { verts, curvedEdges: [...p.def.curvedEdges] };
-  // Reflection reverses winding; restore CCW and remap edge indices.
+  const cs = p.def.curvedSides;
+  if (p.iso.isDirect()) {
+    return {
+      verts,
+      curvedSides: cs ? [cs[0], cs[1]] : null,
+      centralNode: p.def.centralNode,
+    };
+  }
+  // Reflection reverses winding; restore CCW, remap edge and vertex indices.
+  const n = verts.length;
   const reversed = [...verts].reverse();
-  const curved = p.def.curvedEdges.map((i) => worldEdgeIndex(p, i));
-  return { verts: reversed, curvedEdges: curved };
+  return {
+    verts: reversed,
+    curvedSides: cs ? [worldEdgeIndex(p, cs[0]), worldEdgeIndex(p, cs[1])] : null,
+    centralNode: p.def.centralNode === null ? null : n - 1 - p.def.centralNode,
+  };
 }
 
 export interface ValidationIssue {

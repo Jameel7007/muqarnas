@@ -48,48 +48,60 @@ function galleryHtml(): string {
 
 function profileHtml(): string {
   const p = kashiProfile();
-  const S = 300; // px per module
-  const pad = 46;
+  const S = 200; // px per module
+  const pad = 52;
   const W = S + 2 * pad;
-  const H = S + 2 * pad;
+  const H = 2 * S + 2 * pad;
   const X = (x: number) => pad + x * S;
-  const Z = (z: number) => H - pad - z * S;
+  const Zc = (z: number) => H - pad - z * S;
 
-  const [ox, oz] = p.construction.obliqueFrom;
-  const [tx, tz] = p.construction.obliqueTo;
-  const divisions = p.construction.divisions
-    .map(([x, z]) => `<circle cx="${X(x)}" cy="${Z(z)}" r="3" fill="#b7a97f"/>`)
+  const { A, E, Z: Zp, H: Hp, T, divisions } = p.construction;
+  const divDots = divisions
+    .map(([x, z]) => `<circle cx="${X(x)}" cy="${Zc(z)}" r="2.6" fill="#b7a97f"/>`)
     .join('');
-  const [fx, fz] = p.construction.factorPoint;
-
-  const roof = p
-    .polyline(64)
-    .map(([x, z], i) => `${i === 0 ? 'M' : 'L'}${X(x).toFixed(2)} ${Z(z).toFixed(2)}`)
+  const profile = p
+    .polyline(48)
+    .map(([x, z], i) => `${i === 0 ? 'M' : 'L'}${X(x).toFixed(2)} ${Zc(z).toFixed(2)}`)
     .join(' ');
+  const rEZ = Math.hypot(Zp[0] - E[0], Zp[1] - E[1]) * S;
+  const rotArc = `M${X(Zp[0]).toFixed(2)} ${Zc(Zp[1]).toFixed(2)} A ${rEZ.toFixed(2)} ${rEZ.toFixed(2)} 0 0 1 ${X(Hp[0]).toFixed(2)} ${Zc(Hp[1]).toFixed(2)}`;
+  const label = (x: number, z: number, t: string, dx = 6, dy = -6) =>
+    `<text x="${X(x) + dx}" y="${Zc(z) + dy}" fill="#9a917d" font-size="11" font-family="ui-monospace, monospace">${t}</text>`;
 
   return `<section>
     <h2>The module and the profile</h2>
-    <p class="caption">Al-Kāshī's construction, drawn from the construction itself: the 30°
-    oblique from the top corner, five equal parts, two fifths rotated down onto the
-    vertical. Where it lands, the curve begins — the vertical distance from the base to
-    that point is the <em>factor</em> ≈ ${p.factor.toFixed(6)} per module, and it drives
-    the whole surface computation.</p>
+    <p class="caption">Al-Kāshī's "method of the masons," drawn from the construction
+    itself, in the 1 : 2 rectangle the excavated Takht-i Sulaymān cells confirm. The 30°
+    oblique from the top corner A, five equal parts, and the last two fifths rotated about
+    E down onto the vertical give H — the <em>factor</em>, ≈ ${p.factor.toFixed(6)} per
+    module (al-Kāshī: 0;57,38,43,14). The arc HZ is exactly one sixth of a circle, radius
+    4/5, and the 30° is what makes everything tangent: vertical facet, arc, ramp. Facet +
+    half the curve = the <em>taʿdīl</em> ≈ ${p.coefficient.toFixed(6)} (al-Kāshī 1;43,33,45,41),
+    the multiplier that turns counted facet bases into vault surface.</p>
     <div class="row">
-      <figure class="figure" style="max-width:440px">
+      <figure class="figure" style="max-width:${W + 40}px">
         <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-          <rect x="${X(0)}" y="${Z(1)}" width="${S}" height="${S}" fill="none" stroke="#2c2820"/>
-          <line x1="${X(ox)}" y1="${Z(oz)}" x2="${X(tx)}" y2="${Z(tz)}" stroke="#6f8fa0" stroke-width="1.2"/>
-          ${divisions}
-          <line x1="${X(fx)}" y1="${Z(1)}" x2="${X(fx)}" y2="${Z(fz)}" stroke="#b7a97f" stroke-width="1" stroke-dasharray="3 3"/>
-          <circle cx="${X(fx)}" cy="${Z(fz)}" r="3.5" fill="none" stroke="#b7a97f"/>
-          <path d="${roof}" fill="none" stroke="#e8e2d5" stroke-width="2"/>
-          <line x1="${X(0)}" y1="${Z(0)}" x2="${X(1)}" y2="${Z(0)}" stroke="#9a917d" stroke-width="1"/>
-          <text x="${X(1) + 8}" y="${Z(p.factor / 2)}" fill="#9a917d" font-size="11" font-family="ui-monospace, monospace">factor</text>
-          <line x1="${X(1) + 4}" y1="${Z(0)}" x2="${X(1) + 4}" y2="${Z(p.factor)}" stroke="#9a917d" stroke-width="1"/>
+          <rect x="${X(0)}" y="${Zc(p.height)}" width="${S}" height="${2 * S}" fill="none" stroke="#2c2820"/>
+          <line x1="${X(A[0])}" y1="${Zc(A[1])}" x2="${X(E[0])}" y2="${Zc(E[1])}" stroke="#6f8fa0" stroke-width="1.2"/>
+          ${divDots}
+          <path d="${rotArc}" fill="none" stroke="#6f8fa0" stroke-width="1" stroke-dasharray="4 4"/>
+          <line x1="${X(T[0])}" y1="${Zc(T[1])}" x2="${X(Hp[0])}" y2="${Zc(Hp[1])}" stroke="#3d382e" stroke-width="1"/>
+          <line x1="${X(T[0])}" y1="${Zc(T[1])}" x2="${X(Zp[0])}" y2="${Zc(Zp[1])}" stroke="#3d382e" stroke-width="1"/>
+          <circle cx="${X(T[0])}" cy="${Zc(T[1])}" r="2.4" fill="#3d382e" stroke="#9a917d" stroke-width="0.8"/>
+          <path d="${profile}" fill="none" stroke="#e8e2d5" stroke-width="2.2"/>
+          <circle cx="${X(Hp[0])}" cy="${Zc(Hp[1])}" r="3.2" fill="none" stroke="#b7a97f"/>
+          <line x1="${X(0) - 7}" y1="${Zc(0)}" x2="${X(0) - 7}" y2="${Zc(p.factor)}" stroke="#9a917d" stroke-width="1"/>
+          <text x="${X(0) - 14}" y="${Zc(p.factor / 2)}" fill="#9a917d" font-size="11" font-family="ui-monospace, monospace" text-anchor="end" transform="rotate(-90 ${X(0) - 14} ${Zc(p.factor / 2)})">factor</text>
+          ${label(A[0], A[1], 'A', -14, -8)}
+          ${label(E[0], E[1], 'E', -16, 0)}
+          ${label(Zp[0], Zp[1], 'Z', 8, -2)}
+          ${label(Hp[0], Hp[1], 'H', 10, 12)}
+          ${label(T[0], T[1], 'T', 6, 14)}
         </svg>
-        <figcaption>Facet: a plane band of height = factor. Roof: the curve, rising from
-        the facet top and meeting the top line flat at the crown corner. Circular
-        interpolation is our reading; the endpoints and the factor are the construction's.</figcaption>
+        <figcaption>Base to top: vertical facet to H, sixty degrees of arc about T, then
+        the straight 30° ramp to the apex A. Tangent-continuous throughout — the
+        construction's own doing, not an interpolation. Dashed: the two fifths EZ swinging
+        down about E onto the vertical.</figcaption>
       </figure>
     </div>
   </section>`;

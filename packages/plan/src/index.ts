@@ -18,6 +18,8 @@ export {
 export {
   ALPHABET,
   EXACT_AREAS,
+  DIAMETER_SQ,
+  diameterSq,
   element,
   square,
   halfSquare,
@@ -31,6 +33,20 @@ export {
   type ElementKind,
   type Role,
 } from './elements.js';
+export {
+  sexagesimal,
+  measureCurved,
+  measureSimple,
+  ALKASHI_TABLE,
+  ALKASHI_COEFFICIENT,
+  CELL_FACET_BASE,
+  CURVED_INTERMEDIATE_AREA,
+  type CellBase,
+  type CurvedIntermediate,
+  type CurvedCounts,
+  type CurvedMeasure,
+  type SimpleTier,
+} from './measure.js';
 export {
   place,
   worldOutline,
@@ -47,6 +63,9 @@ export { planToSvg, elementToSvg, KIND_COLORS, type PlanSvgOptions } from './svg
 export {
   kashiProfile,
   FACTOR_PER_MODULE,
+  CURVE_LENGTH_PER_MODULE,
+  CURVING_FACTOR_PER_MODULE,
+  COEFFICIENT_PER_MODULE,
   type KashiProfile,
   type KashiProfileOptions,
   type KashiConstruction,

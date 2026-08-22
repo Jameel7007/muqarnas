@@ -1,132 +1,163 @@
 /**
- * Al-Kāshī's profile construction (Miftāḥ al-Ḥisāb IV.9, after
- * Dold-Samplonius). Reproduced as a construction, not a spline fit.
+ * Al-Kāshī's profile curve — "the method of the masons" (Miftāḥ al-Ḥisāb
+ * IV.9; Dold-Samplonius, Centaurus 35 (1992), 220–223; Harmsen, diss.
+ * Heidelberg 2006, 78–79). Reproduced as a construction, not a spline fit.
  *
- * Elevation coordinates: x = plan depth (0 at the cell's inner edge, module m
- * at the outer rib), z = height above the tier base. Default tier height for
- * the curved type is one module, so the elevation is a square.
+ * The curve lives in a rectangle one module wide and TWO modules tall — the
+ * 1:2 proportion confirmed by the prefabricated cells excavated at Takht-i
+ * Sulaymān, whose heights are exactly twice their module. Coordinates here:
+ * x runs from the facet plane (0) toward the apex side (m), z from the tier
+ * base (0) to the cell top (2m). A = (m, 2m) is the top corner over the apex.
  *
- *   1. From the upper line, strike an oblique at 30° from the top outer
- *      corner, meeting the opposite (inner) vertical.
- *   2. Divide the oblique into five equal parts.
- *   3. Rotate two fifths of it down about the top outer corner until it lies
- *      on the outer vertical.
- *   4. The vertical distance from the base up to where the rotated segment
- *      ends — where the curve begins — is the FACTOR.
+ *   1. Strike the oblique AE at 30° below the upper line, meeting the facet
+ *      vertical at E = (0, 2m − m·tan 30°).
+ *   2. Divide AE into five equal parts; Z is the mark three fifths from A.
+ *   3. Rotate the remaining two fifths, EZ, about E down onto the vertical:
+ *      H = (0, E_z − |EZ|). THE FACTOR is the vertical distance from the
+ *      base up to H, where the curve begins:
+ *          factor = (2 − (3/5)√3)·m ≈ 0.9607695·m
+ *      (al-Kāshī's own sexagesimal value 0;57,38,43,14 ≈ 0.9607556 — his
+ *      tiny deficit is documented in Dold-Samplonius, p. 223).
+ *   4. The arc H→Z is "without any doubt one sixth of the circumference":
+ *      its centre T completes the equilateral triangle Z–H–T, so
+ *      T = (4m/5, factor) and the radius is exactly 4m/5.
  *
- * factor F = h − (2/5)·(m / cos 30°) = m·(1 − 4√3/15) ≈ 0.538105·m  (h = m)
+ * The profile, base to top: vertical facet G→H, 60° arc H→Z, straight 30°
+ * ramp Z→A. The 30° oblique is precisely what makes it tangent-continuous:
+ * the arc leaves the facet vertically at H and meets the ramp tangentially
+ * at Z. (An earlier reading here — rotation about the top corner, one arc to
+ * a flat crown — was wrong on both counts.)
  *
- * Below the factor point the facet is a plane vertical band of height F; the
- * roof curve runs from the facet top (m, F) back and up to the inner top
- * corner (0, h), arriving tangent to the top line (a vertical start tangent
- * is impossible for a single arc that stays inside the elevation — it would
- * bulge above the tier top). The circular interpolation is our reading,
- * provisional until the source's own curve is extracted; the endpoints and
- * the factor are the construction's. The factor drives al-Kāshī's whole
- * surface computation, which is why it is a first-class result here.
+ * Surface bookkeeping that hangs off the curve (Dold-Samplonius 216–223):
+ *   curve length  AZH = |AZ| + arc = (2√3/5 + 4π/15)·m ≈ 1.5305783·m
+ *   curving factor    = AZH/2 ≈ 0.7652891·m        (al-Kāshī 0;45,55,2,27)
+ *   coefficient (taʿdīl) = factor + curving factor ≈ 1.7260586·m
+ *                                       (al-Kāshī 1;43,33,45,41 = 1.726045)
+ * A cell's surface ≈ (sum of its facet bases) × coefficient — see measure.ts.
+ *
+ * Al-Kāshī's vault-fitting mechanism: the foot GH "may be shortened or
+ * lengthened when they put it behind the arch, in order that it fits," and
+ * the coefficient changes by the same amount (transl. p. 234). Exposed as
+ * `footAdjustment`; the curved part above the foot is rigid.
  */
 
 export interface KashiConstruction {
-  /** Top outer corner, start of the oblique. */
-  readonly obliqueFrom: readonly [number, number];
-  /** Where the 30° oblique meets the inner vertical. */
-  readonly obliqueTo: readonly [number, number];
-  /** The four interior division points of the oblique (five equal parts). */
+  readonly A: readonly [number, number];
+  readonly E: readonly [number, number];
+  readonly Z: readonly [number, number];
+  readonly H: readonly [number, number];
+  readonly T: readonly [number, number];
+  /** The four interior division marks on the oblique AE. */
   readonly divisions: ReadonlyArray<readonly [number, number]>;
-  /** End of the rotated two-fifths: (m, F). The curve begins here. */
-  readonly factorPoint: readonly [number, number];
 }
 
 export interface RoofArc {
   readonly cx: number;
   readonly cz: number;
   readonly r: number;
-  /** Start/end angles (radians); a0 at the facet top, a1 at the inner top corner. */
+  /** Radians; a0 at H (180°), a1 at Z (120°). */
   readonly a0: number;
   readonly a1: number;
 }
 
 export interface KashiProfile {
   readonly module: number;
+  /** 2·module + footAdjustment. */
   readonly height: number;
-  /** Height of the plane facet band — al-Kāshī's factor. */
+  /** Facet height GH — "the factor". */
   readonly factor: number;
-  /** height − factor: the rise the roof curve covers. */
-  readonly roofRise: number;
+  /** |AZ| + arc HZ: the length of the curved part, rigid under foot adjustment. */
+  readonly curveLength: number;
+  /** Half the curve length — multiplies biped perpendiculars in the Shīrāzī method. */
+  readonly curvingFactor: number;
+  /** factor + curvingFactor: al-Kāshī's taʿdīl, the per-facet-base surface multiplier. */
+  readonly coefficient: number;
   readonly construction: KashiConstruction;
   readonly arc: RoofArc;
-  /** Point on the roof curve, t ∈ [0,1] from facet top to inner top corner. */
-  sampleRoof(t: number): [number, number];
-  /** Full profile polyline from (m, 0) up the facet and along the roof to (0, h). */
-  polyline(roofSamples?: number): Array<[number, number]>;
-  roofArcLength(): number;
+  /** Point at t ∈ [0,1] along the profile (facet → arc → ramp), by arc length. */
+  sample(t: number): [number, number];
+  polyline(arcSamples?: number): Array<[number, number]>;
 }
 
 export interface KashiProfileOptions {
   readonly module?: number;
-  /** Tier height; defaults to one module (curved type). */
-  readonly height?: number;
-  readonly obliqueDegrees?: number;
-  readonly divisions?: number;
-  readonly rotatedParts?: number;
+  /** Lengthen (+) or shorten (−) the vertical foot; coefficient shifts equally. */
+  readonly footAdjustment?: number;
 }
+
+/** The factor per unit module, exact: 2 − (3/5)√3. */
+export const FACTOR_PER_MODULE = 2 - (3 / 5) * Math.sqrt(3);
+/** Curve length AZH per unit module: 2√3/5 + 4π/15. */
+export const CURVE_LENGTH_PER_MODULE = (2 * Math.sqrt(3)) / 5 + (4 * Math.PI) / 15;
+/** Curving factor per unit module: half the curve. */
+export const CURVING_FACTOR_PER_MODULE = CURVE_LENGTH_PER_MODULE / 2;
+/** The taʿdīl per unit module, exact geometric value ≈ 1.7260586 (al-Kāshī: 1.726045). */
+export const COEFFICIENT_PER_MODULE = FACTOR_PER_MODULE + CURVING_FACTOR_PER_MODULE;
 
 export function kashiProfile(opts: KashiProfileOptions = {}): KashiProfile {
   const m = opts.module ?? 1;
-  const h = opts.height ?? m;
-  const obliqueDeg = opts.obliqueDegrees ?? 30;
-  const parts = opts.divisions ?? 5;
-  const rotated = opts.rotatedParts ?? 2;
+  const delta = opts.footAdjustment ?? 0;
+  if (!(m > 0)) throw new Error('kashiProfile: module must be positive');
 
-  const theta = (obliqueDeg * Math.PI) / 180;
-  const obliqueFrom: [number, number] = [m, h];
-  const obliqueTo: [number, number] = [0, h - m * Math.tan(theta)];
-  const obliqueLen = m / Math.cos(theta);
+  const tan30 = Math.tan(Math.PI / 6);
+  const baseFactor = FACTOR_PER_MODULE * m;
+  const factor = baseFactor + delta;
+  if (!(factor > 0)) throw new Error('kashiProfile: foot adjustment consumes the whole facet');
+  const height = 2 * m + delta;
+
+  // Construction points (z shifted by the foot adjustment; the curved part is rigid).
+  const A: [number, number] = [m, height];
+  const E: [number, number] = [0, height - m * tan30];
+  const obliqueLen = m / Math.cos(Math.PI / 6);
   const divisions: Array<[number, number]> = [];
-  for (let i = 1; i < parts; i++) {
-    const t = i / parts;
-    divisions.push([
-      obliqueFrom[0] + (obliqueTo[0] - obliqueFrom[0]) * t,
-      obliqueFrom[1] + (obliqueTo[1] - obliqueFrom[1]) * t,
-    ]);
+  for (let i = 1; i < 5; i++) {
+    const t = i / 5;
+    divisions.push([A[0] + (E[0] - A[0]) * t, A[1] + (E[1] - A[1]) * t]);
   }
+  const Z: [number, number] = [A[0] + (E[0] - A[0]) * (3 / 5), A[1] + (E[1] - A[1]) * (3 / 5)];
+  const H: [number, number] = [0, E[1] - (2 / 5) * obliqueLen];
+  const r = (4 / 5) * m; // |ZH|, exactly
+  const T: [number, number] = [r, H[1]];
 
-  const factor = h - (rotated / parts) * obliqueLen;
-  if (factor <= 0) throw new Error('kashiProfile: degenerate — factor is not positive');
-  const factorPoint: [number, number] = [m, factor];
-  const roofRise = h - factor;
+  const a0 = Math.PI; // at H
+  const a1 = (2 * Math.PI) / 3; // at Z: 60° of arc
+  const arcLen = r * (a0 - a1);
+  const rampLen = Math.hypot(A[0] - Z[0], A[1] - Z[1]); // |AZ| = 2√3/5·m
+  const curveLength = arcLen + rampLen;
+  const curvingFactor = curveLength / 2;
+  const coefficient = factor + curvingFactor;
 
-  // Circular roof arc, horizontal tangent at the crown corner (0, h):
-  // center on the inner vertical, r from passing through the facet top.
-  const r = (m * m + roofRise * roofRise) / (2 * roofRise);
-  const cx = 0;
-  const cz = h - r;
-  const a0 = Math.atan2(factor - cz, m - cx);
-  const a1 = Math.PI / 2;
-
-  const sampleRoof = (t: number): [number, number] => {
-    const a = a0 + (a1 - a0) * t;
-    return [cx + r * Math.cos(a), cz + r * Math.sin(a)];
+  const total = factor + curveLength;
+  const sample = (t: number): [number, number] => {
+    const s = Math.min(Math.max(t, 0), 1) * total;
+    if (s <= factor) return [0, s];
+    const s2 = s - factor;
+    if (s2 <= arcLen) {
+      const a = a0 - s2 / r;
+      return [T[0] + r * Math.cos(a), T[1] + r * Math.sin(a)];
+    }
+    const u = (s2 - arcLen) / rampLen;
+    return [Z[0] + (A[0] - Z[0]) * u, Z[1] + (A[1] - Z[1]) * u];
   };
 
   return {
     module: m,
-    height: h,
+    height,
     factor,
-    roofRise,
-    construction: { obliqueFrom, obliqueTo, divisions, factorPoint },
-    arc: { cx, cz, r, a0, a1 },
-    sampleRoof,
-    polyline(roofSamples = 32) {
-      const pts: Array<[number, number]> = [[m, 0], [m, factor]];
-      for (let i = 1; i <= roofSamples; i++) pts.push(sampleRoof(i / roofSamples));
+    curveLength,
+    curvingFactor,
+    coefficient,
+    construction: { A, E, Z, H, T, divisions },
+    arc: { cx: T[0], cz: T[1], r, a0, a1 },
+    sample,
+    polyline(arcSamples = 24) {
+      const pts: Array<[number, number]> = [[0, 0], [...H]];
+      for (let i = 1; i <= arcSamples; i++) {
+        const a = a0 - ((a0 - a1) * i) / arcSamples;
+        pts.push([T[0] + r * Math.cos(a), T[1] + r * Math.sin(a)]);
+      }
+      pts.push([...A]);
       return pts;
-    },
-    roofArcLength() {
-      return r * (a1 - a0);
     },
   };
 }
-
-/** The factor per unit module for the default construction, in closed form: 1 − 4√3/15. */
-export const FACTOR_PER_MODULE = 1 - (4 * Math.sqrt(3)) / 15;

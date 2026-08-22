@@ -27,8 +27,12 @@ export interface SimpleLiftParams {
 }
 
 export const DEFAULT_SIMPLE_PARAMS: SimpleLiftParams = {
-  tierHeight: 1,
-  facetHeight: 0.5,
+  // Al-Kāshī on the simple type: the facet height "in most cases is the
+  // amount of the module." The roof rise is a fitting parameter — his
+  // measurement even counts simple roofs as if flat — so the tier height
+  // above one module is a modelling choice.
+  tierHeight: 1.5,
+  facetHeight: 1,
 };
 
 export interface CellSpec {

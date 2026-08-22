@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { Q2 } from './q2.js';
-import { Iso, pt, area, interiorAngleUnits } from './geom.js';
+import { Iso, pt, area, dot2, interiorAngleUnits } from './geom.js';
 import {
   ALPHABET,
+  DIAMETER_SQ,
   EXACT_AREAS,
   almond,
+  diameterSq,
   element,
   halfRhombus,
   halfSquare,
@@ -123,22 +125,52 @@ describe('role enforcement (al-Kāshī’s cell/intermediate distinction)', () =
   });
 });
 
+describe('curved sides and central nodes (the cell’s apex anatomy)', () => {
+  it('every fixed curved side is module length and meets the central node', () => {
+    // enforced by construction — reaching here without a throw is the test —
+    // but check the almond concretely: curved sides are its unit sides at the 45° apex.
+    const a = almond();
+    expect(a.centralNode).toBe(0);
+    expect(a.curvedSides).toEqual([0, 3]);
+  });
+
+  it('square and rhombus leave orientation to the placement', () => {
+    expect(square().curvedSides).toBeNull();
+    expect(rhombus().centralNode).toBeNull();
+  });
+
+  it('diameters match Harmsen’s table exactly: jug 1, almond 4−2√2, bipeds 2−√2 and 3−2√2', () => {
+    for (const [kind, expected] of Object.entries(DIAMETER_SQ)) {
+      const d = diameterSq(element(kind as Parameters<typeof element>[0]));
+      expect(d, kind).not.toBeNull();
+      expect(d!.eq(expected), `${kind} diameter²`).toBe(true);
+    }
+    // the rhombus's two orientations, from raw geometry: 2+√2 and 2−√2
+    const r = rhombus().verts;
+    const long = r[2]!.sub(r[0]!);
+    const short = r[3]!.sub(r[1]!);
+    expect(dot2(long, long).eq(Q2.of(2, 1))).toBe(true);
+    expect(dot2(short, short).eq(Q2.of(2, -1))).toBe(true);
+  });
+});
+
 describe('worldOutline under reflection', () => {
-  it('stays CCW and remaps curved edges to the same geometric edges', () => {
+  it('stays CCW and remaps curved sides and central node to the same geometry', () => {
     const placed = place('jug', 'cell', Iso.reflection(0)); // across the x-axis
-    const { verts, curvedEdges } = worldOutline(placed);
+    const { verts, curvedSides, centralNode } = worldOutline(placed);
     // still CCW
     expect(area(verts).eq(EXACT_AREAS['jug']!)).toBe(true);
-    // curved edges must connect (1,0)–(√2/2,−√2/2) and (√2/2,−√2/2)–(0,−1)
-    const apex = Iso.reflection(0).apply(jug().verts[2]!);
-    const keys = curvedEdges.map((i) => {
+    // the central node is the image of the corner O = (0,0)
+    expect(verts[centralNode!]!.eq(pt(0, 0))).toBe(true);
+    // curved sides are the two unit radii from the corner: to (1,0) and to (0,−1)
+    const keys = curvedSides!.map((i) => {
       const a = verts[i]!;
       const b = verts[(i + 1) % verts.length]!;
       return [a.key(), b.key()].sort().join('~');
     });
     const expected = [
-      [pt(1, 0).key(), apex.key()].sort().join('~'),
-      [apex.key(), pt(0, -1).key()].sort().join('~'),
+      [pt(0, 0).key(), pt(1, 0).key()].sort().join('~'),
+      [pt(0, 0).key(), pt(0, -1).key()].sort().join('~'),
     ];
     expect(new Set(keys)).toEqual(new Set(expected));
   });
