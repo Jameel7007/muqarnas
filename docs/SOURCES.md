@@ -60,7 +60,7 @@ Detailed extraction notes with page citations: `muqarnas-sources/extraction-note
 | --- | --- | --- |
 | Takht-i Sulaymān tier assignment | plan done (see above); DS&H's preferred 12-tier reading known in outline (2005 fig. 9 right; two removed diagonal nodes) | encode tiers once the graph solver exists |
 | Curved (qawsī) lift | cell anatomy understood: two facets on backside edges, roof panels meeting over the diameter, sides = the profile | implement after the plate plan |
-| Tier-assignment solver | Harmsen ch. 3 rules extracted (graph, acyclic heights, R1–R4, orbits = the ambiguity) | implement `enumerateAssignments` |
+| Tier-assignment solver | **done** (`lift/solver.ts`, from ch. 3 read in the original): muqarnas graph, A-3.1/3.2/3.3 heights, orbits with parity, Rules 1/2-alt/4, front-joint exclusion, symmetry constraint. On the full plate: 6 free orbits → 4 valid vaults, all corner-start (reproducing "no regular springing without removing edges"), crown-rim reach {16,17,18} incl. both published counts | node-removal variants (the 12-tier preferred reading) |
 | Barley kernel | defined (kite, two opposite equal obtuse angles, short sides = module, diameter free) | construct parametrically with the curved lift |
 | Rectangle element | named by al-Kāshī among simple-type cell bases; outside the Il-Khanid plan set | decide with the simple-type rework |
 | Al-Kāshī's four intermediate constants | encoded as given; Dold-Samplonius could not derive them | our curved meshes may explain them — worth testing |

@@ -17,9 +17,16 @@ import {
   place,
   pt,
   takhtPlate,
+  takhtPlateFull,
   type Plan,
 } from '@muqarnas/plan';
-import { gridVaultLifted, liftCurvedCells, manifoldReport, surfaceArea } from '@muqarnas/lift';
+import {
+  enumerateAssignments,
+  gridVaultLifted,
+  liftCurvedCells,
+  manifoldReport,
+  surfaceArea,
+} from '@muqarnas/lift';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 
@@ -290,6 +297,50 @@ function curvedHtml(): string {
   </section>`;
 }
 
+/* ---------- the same plan, twice ---------- */
+
+function solverHtml(): string {
+  const full = takhtPlateFull();
+  const symmetries = [0, 2, 4, 6].flatMap((k) => [
+    Iso.rotation(k),
+    Iso.reflection(2).then(Iso.rotation(k)),
+  ]);
+  const report = enumerateAssignments(full, { maxFreeOrbits: 20, symmetries });
+  const lo = report.solutions[0]!;
+  const hi = report.solutions[report.solutions.length - 1]!;
+
+  const tiered = (sol: typeof lo): Plan => ({
+    sector: full.sector,
+    placed: full.placed.map((p, i) => {
+      const f = sol.faces.find((x) => x.placedIndex === i)!;
+      return { ...p, tier: f.tier };
+    }),
+  });
+
+  const fig = (sol: typeof lo, label: string) => `
+      <figure class="figure" style="flex:0 1 430px">
+        ${planToSvg(tiered(sol), { width: 410, colorBy: 'tier', showSector: false })}
+        <figcaption>${label}</figcaption>
+      </figure>`;
+
+  return `<section>
+    <h2>The same plan, twice</h2>
+    <p class="caption">Scene 7, computed. Harmsen's reconstruction rules — arrows toward
+    the apexes, heights rising by exactly one, orbits of parallel edges sharing direction,
+    the wall and centre rules — pin all but ${report.freeOrbits} orbits of the full plate.
+    Those ${report.freeOrbits} free choices yield exactly ${report.solutions.length} valid
+    vaults from this one plan, every one of them starting in the corners (the published
+    finding: no regular springing without editing the plan), reaching ${[...new Set(report.solutions.map((s) => s.graphReach))].join(', ')}
+    tiers at the crown rim — the two published readings, 17 and 18, among them. The
+    drawing does not determine the building.</p>
+    <span class="status ok">${report.freeOrbits} free orbits · ${report.candidatesTried} candidates → ${report.solutions.length} valid vaults</span>
+    <div class="row">
+      ${fig(lo, `Reading one: tiers banded outward-in, reach ${lo.graphReach}.`)}
+      ${fig(hi, `Reading two: same plan, different heights, reach ${hi.graphReach}.`)}
+    </div>
+  </section>`;
+}
+
 /* ---------- the lift, seen ---------- */
 
 function liftHtml(): string {
@@ -326,6 +377,7 @@ app.innerHTML = `<main>
   ${profileHtml()}
   ${curvedHtml()}
   ${takhtHtml()}
+  ${solverHtml()}
   ${planHtml()}
   ${liftHtml()}
 </main>`;

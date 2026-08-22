@@ -72,4 +72,4 @@ export {
   type RoofArc,
 } from './profile.js';
 export { gridVaultWedge, gridVaultFull } from './demo.js';
-export { takhtPlate, PLATE_FIELD_SPAN } from './takht.js';
+export { takhtPlate, takhtPlateFull, PLATE_FIELD_SPAN } from './takht.js';

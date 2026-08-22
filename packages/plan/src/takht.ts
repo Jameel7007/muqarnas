@@ -49,3 +49,35 @@ export function takhtPlate(): Plan {
 
 /** The regularized field span: 7 + 3.5√2 modules (the plate's field is 12). */
 export const PLATE_FIELD_SPAN: Q2 = new Q2(Frac.of(7), Frac.of(7, 2));
+
+/**
+ * The full vault: four rotated copies of the quarter, plus the four
+ * seam-straddling diamonds the quarter representation cannot hold. Each
+ * seam half-star leaves V-notches on the plate — the "isosceles right
+ * triangles along the frame of the field" of the published description —
+ * which are the halves of 45°-rotated unit squares centred on the seams at
+ * the seam stars (4 + √2 from the vault centre). Seam edges become
+ * interior; the crown bite becomes a central hole (the plan is an annulus,
+ * so the nominal sector is the outer wall square — face-based consumers
+ * like the tier solver derive the true boundaries from edge adjacency).
+ */
+export function takhtPlateFull(): Plan {
+  const quarter = takhtPlate();
+  const placed = [0, 2, 4, 6].flatMap((k) =>
+    quarter.placed.map((p) => ({ ...p, iso: p.iso.then(Iso.rotation(k)) })),
+  );
+  // seam diamonds: unit square rotated 45°, its low corner at (0, 4) on the
+  // +y seam, rotated to all four seams
+  const diamondBase = Iso.rotation(1).then(Iso.translation(new Pt(Q2.ZERO, Q2.of(4))));
+  for (const k of [0, 2, 4, 6]) {
+    placed.push(place('square', 'cell', diamondBase.then(Iso.rotation(k))));
+  }
+  const s = PLATE_FIELD_SPAN;
+  const sector: Pt[] = [
+    new Pt(s.neg(), s.neg()),
+    new Pt(s, s.neg()),
+    new Pt(s, s),
+    new Pt(s.neg(), s),
+  ];
+  return { sector, placed };
+}

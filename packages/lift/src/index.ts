@@ -27,3 +27,10 @@ export {
   type CurvedLiftParams,
   type CurvedVault,
 } from './curved.js';
+export {
+  enumerateAssignments,
+  type SolvedFace,
+  type TierSolution,
+  type SolverReport,
+  type SolverOptions,
+} from './solver.js';
