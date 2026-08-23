@@ -1,6 +1,6 @@
 import { DoubleSide } from 'three';
 import { MeshStandardNodeMaterial } from 'three/webgpu';
-import { attribute, color, float, mix, pow } from 'three/tsl';
+import { attribute, color, float, mix, mx_noise_float, positionWorld, pow } from 'three/tsl';
 
 /**
  * The material language: plaster, not metal. A rough dielectric — no
@@ -24,12 +24,19 @@ export interface PlasterOptions {
 export function plasterMaterial(opts: PlasterOptions = {}): MeshStandardNodeMaterial {
   const material = new MeshStandardNodeMaterial();
   material.metalness = 0;
-  material.roughness = opts.roughness ?? 0.93;
   material.side = DoubleSide; // the profile view sees the extrados too
 
   const ao = attribute('ao', 'float');
   const cavity = pow(ao, float(opts.cavityStrength ?? 1.35));
-  material.colorNode = mix(color(opts.cavity ?? 0x5a4f42), color(opts.base ?? 0xe4dccb), cavity);
+  // micro-life: two scales of noise drift the albedo a few percent and the
+  // roughness a little — hand-floated plaster, not injection moulding
+  const broad = mx_noise_float(positionWorld.mul(0.14));
+  const fine = mx_noise_float(positionWorld.mul(1.3));
+  const tone = broad.mul(0.035).add(fine.mul(0.02)).add(1);
+  material.colorNode = mix(color(opts.cavity ?? 0x5a4f42), color(opts.base ?? 0xe4dccb), cavity).mul(
+    tone,
+  );
+  material.roughnessNode = float(opts.roughness ?? 0.92).add(broad.mul(0.05));
   material.aoNode = ao;
   return material;
 }

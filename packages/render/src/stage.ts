@@ -1,16 +1,14 @@
 import * as THREE from 'three/webgpu';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { LIGHTING, sunOffset, type LightingState } from './lighting.js';
 
 /**
- * The stage: renderer, camera, and the lighting language.
+ * The stage: renderer, camera, and the mount point for the lighting
+ * language (see lighting.ts — the language itself is locked there).
  *
  * The default view of a muqarnas is from below and close — the camera
- * stands under the vault looking up, not orbiting a museum object. Light
- * follows the historical situation of a vault over a portal or iwan: it
- * does not fall from the sky, it enters low — reflected off the courtyard
- * (a warm, ground-up hemisphere) and raking in from the opening (a low
- * warm directional that climbs into the cells and hands the geometry its
- * shadows). Z is up throughout, in modules.
+ * stands under the vault looking up, not orbiting a museum object.
+ * Z is up throughout, in modules.
  */
 
 export interface VaultStage {
@@ -20,6 +18,8 @@ export interface VaultStage {
   readonly controls: OrbitControls;
   setGeometry(geometry: THREE.BufferGeometry, material: THREE.Material): void;
   setView(preset: 'beneath' | 'profile'): void;
+  /** Apply a state of the lighting language (or an interpolation of two). */
+  applyLighting(state: LightingState): void;
   /** 'webgpu' or 'webgl2' after init */
   readonly backend: string;
   dispose(): void;
@@ -42,34 +42,58 @@ export async function createVaultStage(container: HTMLElement): Promise<VaultSta
   const camera = new THREE.PerspectiveCamera(44, 1, 0.1, 500);
   camera.up.set(0, 0, 1);
 
-  // courtyard light: warm from below, dim cool sky above
-  const hemi = new THREE.HemisphereLight(0x232833, 0xcdb48e, 1.1);
+  // the three instruments of the language: courtyard hemisphere, raking
+  // key, faint opposite fill — parameters come only from LightingState
+  const hemi = new THREE.HemisphereLight();
   hemi.position.set(0, 0, 1);
   scene.add(hemi);
 
-  // the raking light from the opening, climbing into the cells
-  const sun = new THREE.DirectionalLight(0xffe0b4, 2.4);
-  sun.position.set(30, -42, 4);
-  sun.target.position.set(0, 0, 22);
+  const LIGHT_TARGET = new THREE.Vector3(0, 0, 18);
+  const SUN_DISTANCE = 85;
+  const sun = new THREE.DirectionalLight();
+  sun.target.position.copy(LIGHT_TARGET);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
   sun.shadow.camera.near = 1;
-  sun.shadow.camera.far = 160;
-  sun.shadow.camera.left = -34;
-  sun.shadow.camera.right = 34;
+  sun.shadow.camera.far = 220;
+  sun.shadow.camera.left = -36;
+  sun.shadow.camera.right = 36;
   sun.shadow.camera.top = 44;
-  sun.shadow.camera.bottom = -20;
+  sun.shadow.camera.bottom = -44;
   sun.shadow.bias = -0.0004;
-  sun.shadow.normalBias = 0.03;
+  sun.shadow.normalBias = 0.035;
+  sun.shadow.radius = 4;
   scene.add(sun);
   scene.add(sun.target);
 
-  // faint cool fill from the opposite quarter so shadows never go dead
-  const fill = new THREE.DirectionalLight(0x8fa3bd, 0.28);
-  fill.position.set(-26, 30, -8);
-  fill.target.position.set(0, 0, 18);
+  const fill = new THREE.DirectionalLight();
+  fill.target.position.copy(LIGHT_TARGET);
   scene.add(fill);
   scene.add(fill.target);
+
+  const applyLighting = (state: LightingState) => {
+    renderer.toneMappingExposure = state.exposure;
+    hemi.color.set(state.hemisphere.sky);
+    hemi.groundColor.set(state.hemisphere.ground);
+    hemi.intensity = state.hemisphere.intensity;
+    sun.color.set(state.sun.color);
+    sun.intensity = state.sun.intensity;
+    const [ox, oy, oz] = sunOffset(state.sun);
+    sun.position
+      .copy(LIGHT_TARGET)
+      .add(new THREE.Vector3(ox * SUN_DISTANCE, oy * SUN_DISTANCE, oz * SUN_DISTANCE));
+    fill.color.set(state.fill.color);
+    fill.intensity = state.fill.intensity;
+    const [fx, fy, fz] = sunOffset({
+      ...state.sun,
+      azimuthDeg: state.sun.azimuthDeg + 180,
+      elevationDeg: -state.sun.elevationDeg - 20,
+    });
+    fill.position
+      .copy(LIGHT_TARGET)
+      .add(new THREE.Vector3(fx * SUN_DISTANCE, fy * SUN_DISTANCE, fz * SUN_DISTANCE));
+  };
+  applyLighting(LIGHTING.rake);
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
@@ -129,6 +153,7 @@ export async function createVaultStage(container: HTMLElement): Promise<VaultSta
       group.add(mesh);
     },
     setView,
+    applyLighting,
     dispose() {
       observer.disconnect();
       renderer.setAnimationLoop(null);

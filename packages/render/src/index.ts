@@ -7,3 +7,4 @@ export { vaultToGeometry, toDisplayGeometry } from './geometry.js';
 export { bakeVertexAO, type AoOptions } from './ao.js';
 export { plasterMaterial, type PlasterOptions } from './plaster.js';
 export { createVaultStage, type VaultStage } from './stage.js';
+export { LIGHTING, lerpLighting, sunOffset, type LightingState } from './lighting.js';

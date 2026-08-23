@@ -2,11 +2,13 @@ import './style.css';
 import { Iso, takhtPlateFull, type Pt } from '@muqarnas/plan';
 import { enumerateAssignments, liftVault } from '@muqarnas/lift';
 import {
+  LIGHTING,
   bakeVertexAO,
   createVaultStage,
   plasterMaterial,
   toDisplayGeometry,
   vaultToGeometry,
+  type LightingState,
 } from '@muqarnas/render';
 import type { BufferGeometry } from 'three';
 
@@ -104,6 +106,34 @@ async function main() {
       stage.setView((btn as HTMLElement).dataset.view as 'beneath' | 'profile');
     });
   });
+
+  // the lighting language: three states + the animatable rake azimuth
+  const lightsBox = document.querySelector('#lights')!;
+  const azimuth = document.querySelector('#azimuth') as HTMLInputElement;
+  let currentLight: LightingState = LIGHTING.rake;
+  const applyCurrent = () => {
+    stage.applyLighting({
+      ...currentLight,
+      sun: { ...currentLight.sun, azimuthDeg: Number(azimuth.value) },
+    });
+  };
+  (Object.keys(LIGHTING) as Array<keyof typeof LIGHTING>).forEach((name) => {
+    const btn = document.createElement('button');
+    btn.className = 'pick';
+    btn.dataset.light = name;
+    btn.textContent = name;
+    btn.addEventListener('click', () => {
+      currentLight = LIGHTING[name];
+      azimuth.value = String(currentLight.sun.azimuthDeg);
+      applyCurrent();
+      document.querySelectorAll('[data-light]').forEach((b) => {
+        b.classList.toggle('active', (b as HTMLElement).dataset.light === name);
+      });
+    });
+    lightsBox.appendChild(btn);
+  });
+  document.querySelector('[data-light="rake"]')!.classList.add('active');
+  azimuth.addEventListener('input', applyCurrent);
 
   const initial = report.solutions.findIndex((s) => s.graphReach === 17);
   await show(initial >= 0 ? initial : 0);
