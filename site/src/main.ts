@@ -459,7 +459,8 @@ function liftHtml(): string {
 app.innerHTML = `<main>
   <header class="masthead">
     <h1>Muqarnas</h1>
-    <p class="sub">plan inspection — the element alphabet, al-Kāshī's profile, and the exact-cover invariant</p>
+    <p class="sub">plan inspection — the element alphabet, al-Kāshī's profile, and the exact-cover
+    invariant · <a href="/render.html" style="color: var(--accent)">the render stage →</a></p>
   </header>
   ${galleryHtml()}
   ${profileHtml()}

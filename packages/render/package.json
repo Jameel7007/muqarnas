@@ -1,0 +1,15 @@
+{
+  "name": "@muqarnas/render",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@muqarnas/lift": "*",
+    "@muqarnas/plan": "*",
+    "three": "^0.180.0",
+    "three-mesh-bvh": "^0.9.0"
+  }
+}

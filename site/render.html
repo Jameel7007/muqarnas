@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>muqarnas — the render stage</title>
+    <style>
+      html,
+      body {
+        height: 100%;
+      }
+      #stage {
+        position: fixed;
+        inset: 0;
+      }
+      #panel {
+        position: fixed;
+        top: 1.2rem;
+        left: 1.2rem;
+        max-width: 380px;
+        background: rgba(20, 18, 14, 0.82);
+        border: 1px solid #2c2820;
+        padding: 1rem 1.2rem;
+        backdrop-filter: blur(4px);
+        z-index: 2;
+      }
+      #panel h1 {
+        margin-bottom: 0.3rem;
+      }
+      #panel .sub {
+        margin-bottom: 0.9rem;
+      }
+      #panel .picker {
+        margin-bottom: 0.7rem;
+      }
+      #panel .views {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.7rem;
+      }
+      #status {
+        display: block;
+      }
+      #panel a {
+        color: #b7a97f;
+        font-size: 0.75rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <div id="panel">
+      <h1>Muqarnas</h1>
+      <p class="sub">the render stage — light is the subject</p>
+      <div class="picker" id="readings"></div>
+      <div class="views">
+        <button class="pick" data-view="beneath">from beneath</button>
+        <button class="pick" data-view="profile">profile</button>
+      </div>
+      <span class="status ok" id="status">starting…</span>
+      <p style="margin-top: 0.8rem"><a href="/">← plan inspection</a></p>
+    </div>
+    <script type="module" src="/src/render-main.ts"></script>
+  </body>
+</html>

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@muqarnas/plan": "*",
-    "@muqarnas/lift": "*"
+    "@muqarnas/lift": "*",
+    "@muqarnas/render": "*"
   }
 }

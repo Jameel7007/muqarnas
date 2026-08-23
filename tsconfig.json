@@ -13,7 +13,8 @@
     "verbatimModuleSyntax": true,
     "paths": {
       "@muqarnas/plan": ["./packages/plan/src/index.ts"],
-      "@muqarnas/lift": ["./packages/lift/src/index.ts"]
+      "@muqarnas/lift": ["./packages/lift/src/index.ts"],
+      "@muqarnas/render": ["./packages/render/src/index.ts"]
     }
   },
   "include": ["packages/*/src", "site/src", "vitest.config.ts"]
