@@ -67,10 +67,10 @@ export const LIGHTING: Record<'rake' | 'court' | 'ember', LightingState> = {
   },
   ember: {
     name: 'ember',
-    exposure: 1.12,
-    hemisphere: { sky: 0x222839, ground: 0xa67a52, intensity: 0.52 },
-    sun: { color: 0xff7f42, intensity: 2.8, azimuthDeg: 62, elevationDeg: -18 },
-    fill: { color: 0x5d6d85, intensity: 0.2 },
+    exposure: 1.18,
+    hemisphere: { sky: 0x222839, ground: 0xa67a52, intensity: 0.6 },
+    sun: { color: 0xff7f42, intensity: 2.9, azimuthDeg: 62, elevationDeg: -18 },
+    fill: { color: 0x5d6d85, intensity: 0.22 },
   },
 };
 

@@ -115,12 +115,18 @@ export function withPaintAttribute(
     } else if (role === 'facet') {
       for (let c = 0; c < 3; c++) {
         const i = t * 3 + c;
-        // horizontal tangent of the facet plane: up × normal
+        // horizontal tangent of the facet plane: up × normal — with a
+        // canonical sign, or back-to-back facet pairs (whose normals
+        // oppose) would mirror the stencil mid-figure and shear it
         const nx = nrm.getX(i);
         const ny = nrm.getY(i);
         const len = Math.hypot(nx, ny) || 1;
-        const tx = -ny / len;
-        const ty = nx / len;
+        let tx = -ny / len;
+        let ty = nx / len;
+        if (tx * 0.9848 + ty * 0.1736 < 0) {
+          tx = -tx;
+          ty = -ty;
+        }
         orn[i * 3] = pos.getX(i) * tx + pos.getY(i) * ty;
         orn[i * 3 + 1] = pos.getZ(i);
         orn[i * 3 + 2] = 1;

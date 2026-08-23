@@ -33,6 +33,19 @@ const span = (p: number, a: number, b: number) => smooth((p - a) / (b - a));
 /** Scene 7 hands over at RAKE_B's hour; the day leaves it and returns to it. */
 export const DAY_START_DEG = 150;
 
+/**
+ * The day's own rake: the under-light pushed to be emphatic — hotter key,
+ * a shade more exposure, the ambience held back so the blade dominates.
+ * CONSTANT for the whole scene: the lock still means what it says, because
+ * nothing about this state ever changes except the azimuth.
+ */
+export const DAY_RAKE: LightingState = {
+  ...LIGHTING.rake,
+  exposure: LIGHTING.rake.exposure + 0.08,
+  hemisphere: { ...LIGHTING.rake.hemisphere, intensity: LIGHTING.rake.hemisphere.intensity * 0.85 },
+  sun: { ...LIGHTING.rake.sun, intensity: LIGHTING.rake.sun.intensity * 1.22 },
+};
+
 /** The key's azimuth: one full turn, eased, beginning once the camera stands. */
 export function dayAzimuth(p: number): number {
   return DAY_START_DEG + 360 * span(p, 0.1, 0.94);
@@ -40,7 +53,7 @@ export function dayAzimuth(p: number): number {
 
 /** The whole day is one field of one state — the lock, as a function. */
 export function dayState(p: number): LightingState {
-  return { ...LIGHTING.rake, sun: { ...LIGHTING.rake.sun, azimuthDeg: dayAzimuth(p) } };
+  return { ...DAY_RAKE, sun: { ...DAY_RAKE.sun, azimuthDeg: dayAzimuth(p) } };
 }
 
 /**
