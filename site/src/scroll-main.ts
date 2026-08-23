@@ -18,6 +18,7 @@ import {
   createScene1,
   createScene2,
   createScene3,
+  createScene4,
   createScene5,
   createScene7,
   gsap,
@@ -25,6 +26,7 @@ import {
   makeScene1Objects,
   makeScene2Objects,
   makeScene3Objects,
+  makeScene4Objects,
 } from '@muqarnas/scenes';
 
 /**
@@ -113,6 +115,11 @@ async function main() {
   const s3 = makeScene3Objects(plan);
   stage.scene.add(s3.group);
 
+  const s4 = makeScene4Objects(plan);
+  stage.scene.add(s4.group);
+  el('#cap-4b-n').textContent = String(s4.quarterCount);
+  el('#cap-4d-n').textContent = String(plan.placed.length);
+
   // the census, from the digitized plate itself
   const tally = (kind: string) => plan.placed.filter((q) => q.def.kind === kind).length;
   el('#cap-3d-total').textContent = String(plan.placed.length);
@@ -137,13 +144,17 @@ async function main() {
       objects: [s3.group] as Object3D[],
       caps: caps('#cap-3a', '#cap-3b', '#cap-3c', '#cap-3d'),
     },
+    four: {
+      objects: [s4.group] as Object3D[],
+      caps: caps('#cap-4a', '#cap-4b', '#cap-4c', '#cap-4d'),
+    },
     five: { objects: [meshA, planLines] as Object3D[], caps: caps('#cap-a', '#cap-b') },
     seven: {
       objects: [meshA, meshB, planLines] as Object3D[],
       caps: caps('#cap-7a', '#cap-7b', '#cap-7c'),
     },
   };
-  const everything = [s1.group, s2.group, s3.group, meshA, meshB, planLines];
+  const everything = [s1.group, s2.group, s3.group, s4.group, meshA, meshB, planLines];
   const allCaps = Object.values(worlds).flatMap((w) => w.caps);
   const show = (world: { objects: Object3D[]; caps: HTMLElement[] }) => {
     for (const o of everything) o.visible = world.objects.includes(o);
@@ -182,6 +193,17 @@ async function main() {
   bindScrubbedScene(el('#scene3-track'), (p) => {
     show(worlds.three);
     scene3(p);
+  });
+
+  const scene4 = createScene4(s4, stage, {
+    captionA: el('#cap-4a'),
+    captionB: el('#cap-4b'),
+    captionC: el('#cap-4c'),
+    captionD: el('#cap-4d'),
+  });
+  bindScrubbedScene(el('#scene4-track'), (p) => {
+    show(worlds.four);
+    scene4(p);
   });
 
   const scene5 = createScene5(

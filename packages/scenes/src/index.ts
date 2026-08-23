@@ -12,6 +12,7 @@ export {
   type Scene2Objects,
 } from './scene2.js';
 export { createScene3, makeScene3Objects, type Scene3Dom, type Scene3Objects } from './scene3.js';
+export { createScene4, makeScene4Objects, type Scene4Dom, type Scene4Objects } from './scene4.js';
 export { createScene5, type Scene5Dom, type Scene5Extras } from './scene5.js';
 export { createScene7, type Scene7Dom, type Scene7Parts } from './scene7.js';
 export { makePlanLines } from './planLines.js';
