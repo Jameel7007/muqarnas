@@ -3,7 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>muqarnas — the lift</title>
+    <meta
+      name="description"
+      content="A muqarnas vault raised from its plan — al-Kāshī's method, the Takht-i Sulaymān plate, and the light it was all for."
+    />
+    <title>Muqarnas — the vault from its plan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap"
+    />
     <style>
       #stage {
         position: fixed;
@@ -58,8 +68,9 @@
         position: fixed;
         left: 50%;
         transform: translateX(-50%);
-        bottom: 9vh;
-        max-width: 34rem;
+        bottom: 8.5vh;
+        max-width: 37rem;
+        padding: 0 1.4rem;
         text-align: center;
         opacity: 0;
         z-index: 2;
@@ -67,17 +78,47 @@
       }
       .scene-caption .num {
         display: block;
-        font-size: 0.7rem;
-        letter-spacing: 0.5em;
+        font-size: 0.67rem;
+        letter-spacing: 0.55em;
         color: var(--accent);
-        margin-bottom: 0.55rem;
+        margin-bottom: 0.6rem;
         text-transform: uppercase;
+        text-shadow: 0 1px 10px rgba(10, 9, 6, 0.95);
       }
       .scene-caption p {
-        font-size: 1.02rem;
+        font-family: 'Cormorant Garamond', Georgia, serif;
+        font-size: 1.28rem;
+        font-weight: 500;
         color: var(--ink);
         font-style: italic;
-        line-height: 1.7;
+        line-height: 1.62;
+        letter-spacing: 0.012em;
+        text-shadow:
+          0 1px 14px rgba(10, 9, 6, 0.95),
+          0 0 3px rgba(10, 9, 6, 0.85);
+      }
+      #veil {
+        position: fixed;
+        inset: 0;
+        background: #0d0c09;
+        opacity: 0;
+        z-index: 3;
+        pointer-events: none;
+      }
+      #about-link {
+        position: fixed;
+        top: 1.4rem;
+        right: 1.6rem;
+        z-index: 4;
+        font-size: 0.68rem;
+        letter-spacing: 0.4em;
+        text-transform: uppercase;
+        color: var(--dim);
+        text-decoration: none;
+        transition: color 0.4s ease;
+      }
+      #about-link:hover {
+        color: var(--accent);
       }
       #loader {
         position: fixed;
@@ -86,14 +127,49 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 0.9rem;
+        gap: 1.1rem;
         background: var(--bg);
         z-index: 5;
-        transition: opacity 0.9s ease;
+        transition: opacity 1.2s ease;
       }
       #loader.done {
         opacity: 0;
         pointer-events: none;
+      }
+      #loader h1 {
+        font-family: 'Cormorant Garamond', Georgia, serif;
+        font-weight: 600;
+        font-size: 2.1rem;
+        letter-spacing: 0.34em;
+        text-transform: uppercase;
+        margin-left: 0.34em;
+        color: var(--ink);
+      }
+      #loader .sub {
+        font-size: 0.66rem;
+        letter-spacing: 0.42em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-left: 0.42em;
+      }
+      #load-rule {
+        width: 13rem;
+        height: 1px;
+        background: rgba(232, 226, 213, 0.14);
+        margin-top: 0.5rem;
+        overflow: hidden;
+      }
+      #load-rule i {
+        display: block;
+        height: 100%;
+        width: 0%;
+        background: var(--accent);
+        transition: width 0.35s ease;
+      }
+      #load-status {
+        font-size: 0.7rem;
+        letter-spacing: 0.2em;
+        color: var(--dim);
       }
       #hint {
         position: fixed;
@@ -106,6 +182,16 @@
         color: var(--dim);
         z-index: 2;
         transition: opacity 0.6s ease;
+        animation: hint-breathe 3.2s ease-in-out infinite;
+      }
+      @keyframes hint-breathe {
+        0%,
+        100% {
+          transform: translateX(-50%) translateY(0);
+        }
+        50% {
+          transform: translateX(-50%) translateY(0.35rem);
+        }
       }
     </style>
   </head>
@@ -114,8 +200,11 @@
 
     <div id="loader">
       <h1>Muqarnas</h1>
-      <span class="status ok" id="load-status">…</span>
+      <span class="sub">the vault from its plan</span>
+      <div id="load-rule"><i></i></div>
+      <span id="load-status">…</span>
     </div>
+    <a id="about-link" href="/about.html">about</a>
 
     <div class="scene-caption" id="cap-1a">
       <span class="num">I — the square and the circle</span>
@@ -278,23 +367,25 @@
     <span id="hint">scroll</span>
 
     <div class="track" id="scene1-track"></div>
-    <div class="track runway"></div>
+    <div class="track runway cut"></div>
     <div class="track" id="scene2-track"></div>
-    <div class="track runway"></div>
+    <div class="track runway cut"></div>
     <div class="track" id="scene3-track"></div>
-    <div class="track runway"></div>
+    <div class="track runway cut"></div>
     <div class="track" id="scene4-track"></div>
     <div class="track runway"></div>
     <div class="track" id="scene5-track"></div>
     <div class="track runway"></div>
     <div class="track" id="scene6-track"></div>
-    <div class="track runway"></div>
+    <div class="track runway cut"></div>
     <div class="track" id="scene7-track"></div>
-    <div class="track runway"></div>
+    <div class="track runway cut"></div>
     <div class="track" id="scene8-track"></div>
     <div class="track runway"></div>
     <div class="track" id="scene9-track"></div>
     <div class="track runway"></div>
+
+    <div id="veil"></div>
   </body>
   <script type="module" src="/src/scroll-main.ts"></script>
 </html>
