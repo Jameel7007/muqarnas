@@ -28,6 +28,16 @@ const smooth = (t: number) => {
   return x * x * (3 - 2 * x);
 };
 
+/**
+ * Tier-cascade: one scalar g ∈ [0,1] unfolds the whole vault bottom-up,
+ * `window` tiers rising at once. Driving g backwards descends top-down —
+ * the same function plays construction and return.
+ */
+export function cascadeTiers(g: number, maxTier: number, window = 3): (tier: number) => number {
+  const total = maxTier + window - 1;
+  return (tier) => smooth((g * total - (tier - 1)) / window);
+}
+
 export class RisingVaultRig {
   readonly geometry: BufferGeometry;
   private readonly finalPos: Float32Array;

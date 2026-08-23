@@ -1,4 +1,4 @@
-import { BufferAttribute, BufferGeometry } from 'three';
+import { BufferAttribute, BufferGeometry, Mesh, type Material } from 'three';
 import { toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { CurvedVault } from '@muqarnas/lift';
 
@@ -37,4 +37,12 @@ export function toDisplayGeometry(welded: BufferGeometry, creaseAngleDeg = 32): 
   const creased = toCreasedNormals(nonIndexed, (creaseAngleDeg * Math.PI) / 180);
   creased.computeBoundingSphere();
   return creased;
+}
+
+/** A shadow-casting vault mesh, ready for the stage. */
+export function makeVaultMesh(geometry: BufferGeometry, material: Material): Mesh {
+  const mesh = new Mesh(geometry, material);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
 }
