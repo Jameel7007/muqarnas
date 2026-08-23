@@ -22,6 +22,14 @@ export {
   type Scene8Dom,
   type Scene8Parts,
 } from './scene8.js';
+export {
+  createScene9,
+  makeScene9Objects,
+  returnDescent,
+  type Scene9Dom,
+  type Scene9Objects,
+  type Scene9Parts,
+} from './scene9.js';
 export { createScene5, type Scene5Dom, type Scene5Extras } from './scene5.js';
 export { createScene7, type Scene7Dom, type Scene7Parts } from './scene7.js';
 export { makePlanLines } from './planLines.js';

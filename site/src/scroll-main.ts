@@ -23,12 +23,14 @@ import {
   createScene6,
   createScene7,
   createScene8,
+  createScene9,
   gsap,
   makePlanLines,
   makeScene1Objects,
   makeScene2Objects,
   makeScene3Objects,
   makeScene4Objects,
+  makeScene9Objects,
 } from '@muqarnas/scenes';
 
 /**
@@ -119,6 +121,9 @@ async function main() {
 
   const s4 = makeScene4Objects(plan);
   stage.scene.add(s4.group);
+
+  const s9 = makeScene9Objects();
+  stage.scene.add(s9.group);
   el('#cap-4b-n').textContent = String(s4.quarterCount);
   el('#cap-4d-n').textContent = String(plan.placed.length);
 
@@ -160,6 +165,10 @@ async function main() {
       caps: caps('#cap-7a', '#cap-7b', '#cap-7c'),
     },
     eight: { objects: [meshB] as Object3D[], caps: caps('#cap-8a', '#cap-8b', '#cap-8c') },
+    nine: {
+      objects: [meshB, planLines, s9.group] as Object3D[],
+      caps: caps('#cap-9a', '#cap-9b', '#cap-9c'),
+    },
   };
   const everything = [s1.group, s2.group, s3.group, s4.group, meshA, meshB, planLines];
   const allCaps = Object.values(worlds).flatMap((w) => w.caps);
@@ -254,6 +263,16 @@ async function main() {
   bindScrubbedScene(el('#scene8-track'), (p) => {
     show(worlds.eight);
     scene8(p);
+  });
+
+  const scene9 = createScene9({ rig: b.rig, planLines }, s9, stage, {
+    captionA: el('#cap-9a'),
+    captionB: el('#cap-9b'),
+    captionC: el('#cap-9c'),
+  });
+  bindScrubbedScene(el('#scene9-track'), (p) => {
+    show(worlds.nine);
+    scene9(p);
   });
 
   // the page opens on scene 1's first frame regardless of bind order
