@@ -42,7 +42,7 @@ interface CamKey {
 const CAMERA_PATH: CamKey[] = [
   { at: 0.0, pos: [0, -7, 58], target: [0, 0, 0] }, // the drawing, from above
   { at: 0.5, pos: [2, -36, 30], target: [0, 0, 1.5] }, // leaving the plane
-  { at: 1.0, pos: [6, -6, 2.7], target: [11.6, -11.0, 1.35] }, // among the corner pair
+  { at: 1.0, pos: [5.2, -7.2, 3.4], target: [11.6, -11.0, 1.6] }, // among the corner pair
 ];
 
 /** the rake swung across the field, striking into the niches the camera faces */

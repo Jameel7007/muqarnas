@@ -20,6 +20,7 @@ import {
   createScene3,
   createScene4,
   createScene5,
+  createScene6,
   createScene7,
   gsap,
   makePlanLines,
@@ -149,6 +150,7 @@ async function main() {
       caps: caps('#cap-4a', '#cap-4b', '#cap-4c', '#cap-4d'),
     },
     five: { objects: [meshA, planLines] as Object3D[], caps: caps('#cap-a', '#cap-b') },
+    six: { objects: [meshA] as Object3D[], caps: caps('#cap-6a', '#cap-6b', '#cap-6c') },
     seven: {
       objects: [meshA, meshB, planLines] as Object3D[],
       caps: caps('#cap-7a', '#cap-7b', '#cap-7c'),
@@ -215,6 +217,18 @@ async function main() {
   bindScrubbedScene(el('#scene5-track'), (p) => {
     show(worlds.five);
     scene5(p);
+  });
+
+  a.display.computeBoundingBox();
+  const scene6 = createScene6(
+    { rig: a.rig, crownZ: a.display.boundingBox!.max.z },
+    stage,
+    { captionA: el('#cap-6a'), captionB: el('#cap-6b'), captionC: el('#cap-6c') },
+  );
+  el('#cap-6c-n').textContent = String(a.rig.maxTier);
+  bindScrubbedScene(el('#scene6-track'), (p) => {
+    show(worlds.six);
+    scene6(p);
   });
 
   const scene7 = createScene7(

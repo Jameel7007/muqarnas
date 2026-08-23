@@ -60,10 +60,9 @@ export function createScene7(parts: Scene7Parts, stage: VaultStage, dom: Scene7D
   const tgt = new Vector3();
 
   return (p: number): void => {
-    // A: completes (a compressed nod to scene 6), holds, then descends
-    const complete = span(p, 0, 0.14);
+    // A: stands complete out of scene 6, holds, then descends
     const descend = span(p, 0.22, 0.5);
-    const gA = (0.12 + 0.88 * complete) * (1 - descend);
+    const gA = 1 - descend;
     parts.rigA.update(cascadeTiers(gA, parts.rigA.maxTier));
 
     // B: rises out of the same flatness

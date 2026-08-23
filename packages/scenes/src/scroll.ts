@@ -30,6 +30,16 @@ export function bindScrubbedScene(
         onUpdate: apply,
       });
     },
+    // a refresh (resize) re-fires every trigger in document order, letting a
+    // past-end scene reassert its world over the active one — so the scene
+    // that actually contains the scroll position reapplies itself last
+    onRefresh: (self) => {
+      if (self.isActive) {
+        proxy.p = self.progress;
+        latest = self.progress;
+        apply();
+      }
+    },
   });
   onProgress(0);
   return st;
