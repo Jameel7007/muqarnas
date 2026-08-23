@@ -99,12 +99,13 @@ export function withPaintAttribute(
   const glow = new Float32Array(count);
 
   // pass one: hues, facet frames, and each cell's apex (its roof's peak).
-  // Facet triangles are grouped into panels by CONNECTIVITY — same cell,
-  // same facing, sharing a vertex (positions are bit-exact from the
-  // lattice, so no tolerance is needed). An earlier cut keyed on a
-  // quantized plane offset, and any facet near a rounding boundary split
-  // into two half-fields, each centring a cropped star: quantization
-  // bugs deserve exact answers.
+  // Facet triangles are grouped into panels by CONNECTIVITY — sharing a
+  // vertex (positions are bit-exact from the lattice, so no tolerance is
+  // needed) on the same FOLDED facing: opposite normals count as one,
+  // because the masonry's double walls are two coincident facets from
+  // neighbouring cells, and if each carries its own frame the depth-fight
+  // between them renders a patchwork of two different stars — the smeared
+  // figures the design review caught. One plane, one frame, both sides.
   const apex = new Map<number, [number, number, number]>();
   const facetTris: number[] = [];
   const parent: number[] = [];
@@ -142,20 +143,20 @@ export function withPaintAttribute(
       parent.push(local);
       for (let c = 0; c < 3; c++) {
         const i = t * 3 + c;
-        // horizontal tangent of the facet plane: up × normal — with a
-        // canonical sign, or back-to-back facet pairs (whose normals
-        // oppose) would mirror the stencil and shear it
-        const nx = nrm.getX(i);
-        const ny = nrm.getY(i);
+        // fold the normal to a canonical half-plane, then take the
+        // horizontal tangent from the folded normal — coincident
+        // opposite-facing facets get the SAME frame by construction
+        let nx = nrm.getX(i);
+        let ny = nrm.getY(i);
         const len = Math.hypot(nx, ny) || 1;
-        let tx = -ny / len;
-        let ty = nx / len;
-        if (tx * 0.9848 + ty * 0.1736 < 0) {
-          tx = -tx;
-          ty = -ty;
+        nx /= len;
+        ny /= len;
+        if (nx * 0.9848 + ny * 0.1736 < 0) {
+          nx = -nx;
+          ny = -ny;
         }
-        cornerU[i] = pos.getX(i) * tx + pos.getY(i) * ty;
-        const key = `${cell}|${Math.round((nx / len) * 8)},${Math.round((ny / len) * 8)}|${pos.getX(i)},${pos.getY(i)},${pos.getZ(i)}`;
+        cornerU[i] = pos.getX(i) * -ny + pos.getY(i) * nx;
+        const key = `${Math.round(nx * 8)},${Math.round(ny * 8)}|${pos.getX(i)},${pos.getY(i)},${pos.getZ(i)}`;
         const seen = buckets.get(key);
         if (seen === undefined) buckets.set(key, local);
         else union(local, seen);
