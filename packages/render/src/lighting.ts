@@ -53,24 +53,24 @@ export interface LightingState {
 export const LIGHTING: Record<'rake' | 'court' | 'ember', LightingState> = {
   rake: {
     name: 'rake',
-    exposure: 1.28,
+    exposure: 1.34,
     hemisphere: { sky: 0x1b2130, ground: 0xcfa267, intensity: 0.75 },
     sun: { color: 0xffc37e, intensity: 3.6, azimuthDeg: 35, elevationDeg: -15 },
     fill: { color: 0x7f93ad, intensity: 0.26 },
   },
   court: {
     name: 'court',
-    exposure: 1.14,
+    exposure: 1.2,
     hemisphere: { sky: 0x333c4e, ground: 0xdec09a, intensity: 1.6 },
     sun: { color: 0xffe9c2, intensity: 1.0, azimuthDeg: 20, elevationDeg: -8 },
     fill: { color: 0x8fa3bd, intensity: 0.36 },
   },
   ember: {
     name: 'ember',
-    exposure: 1.26,
-    hemisphere: { sky: 0x222839, ground: 0xa67a52, intensity: 0.7 },
-    sun: { color: 0xff7f42, intensity: 3.05, azimuthDeg: 62, elevationDeg: -18 },
-    fill: { color: 0x5d6d85, intensity: 0.26 },
+    exposure: 1.34,
+    hemisphere: { sky: 0x222839, ground: 0xb5854f, intensity: 0.82 },
+    sun: { color: 0xff7f42, intensity: 3.2, azimuthDeg: 62, elevationDeg: -18 },
+    fill: { color: 0x5d6d85, intensity: 0.3 },
   },
 };
 

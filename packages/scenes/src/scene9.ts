@@ -97,9 +97,10 @@ export function createScene9(
     // down through the tiers
     parts.rig.update(cascadeTiers(returnDescent(p), parts.rig.maxTier));
 
-    // the light goes: ember, then the ember banked down to its coals
+    // the day lowers to ember — a hush, never darkness: the return stays
+    // warm and lit all the way to the point
     const base = lerpLighting(RAKE_150, LIGHTING.ember, span(p, 0.02, 0.16));
-    const dim = 1 - 0.34 * span(p, 0.55, 0.75);
+    const dim = 1 - 0.14 * span(p, 0.55, 0.75);
     stage.applyLighting({ ...base, exposure: base.exposure * dim });
 
     // the ink needs no light: the plan comes back through the dark,
