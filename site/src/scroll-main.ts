@@ -22,6 +22,7 @@ import {
   createScene5,
   createScene6,
   createScene7,
+  createScene8,
   gsap,
   makePlanLines,
   makeScene1Objects,
@@ -150,11 +151,15 @@ async function main() {
       caps: caps('#cap-4a', '#cap-4b', '#cap-4c', '#cap-4d'),
     },
     five: { objects: [meshA, planLines] as Object3D[], caps: caps('#cap-a', '#cap-b') },
-    six: { objects: [meshA] as Object3D[], caps: caps('#cap-6a', '#cap-6b', '#cap-6c') },
+    six: {
+      objects: [meshA, planLines] as Object3D[],
+      caps: caps('#cap-6a', '#cap-6b', '#cap-6c'),
+    },
     seven: {
       objects: [meshA, meshB, planLines] as Object3D[],
       caps: caps('#cap-7a', '#cap-7b', '#cap-7c'),
     },
+    eight: { objects: [meshB] as Object3D[], caps: caps('#cap-8a', '#cap-8b', '#cap-8c') },
   };
   const everything = [s1.group, s2.group, s3.group, s4.group, meshA, meshB, planLines];
   const allCaps = Object.values(worlds).flatMap((w) => w.caps);
@@ -221,7 +226,7 @@ async function main() {
 
   a.display.computeBoundingBox();
   const scene6 = createScene6(
-    { rig: a.rig, crownZ: a.display.boundingBox!.max.z },
+    { rig: a.rig, crownZ: a.display.boundingBox!.max.z, planLines },
     stage,
     { captionA: el('#cap-6a'), captionB: el('#cap-6b'), captionC: el('#cap-6c') },
   );
@@ -239,6 +244,16 @@ async function main() {
   bindScrubbedScene(el('#scene7-track'), (p) => {
     show(worlds.seven);
     scene7(p);
+  });
+
+  const scene8 = createScene8({ rig: b.rig }, stage, {
+    captionA: el('#cap-8a'),
+    captionB: el('#cap-8b'),
+    captionC: el('#cap-8c'),
+  });
+  bindScrubbedScene(el('#scene8-track'), (p) => {
+    show(worlds.eight);
+    scene8(p);
   });
 
   // the page opens on scene 1's first frame regardless of bind order

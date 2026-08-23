@@ -42,13 +42,17 @@ interface CamKey {
 const CAMERA_PATH: CamKey[] = [
   { at: 0.0, pos: [0, -7, 58], target: [0, 0, 0] }, // the drawing, from above
   { at: 0.5, pos: [2, -36, 30], target: [0, 0, 1.5] }, // leaving the plane
-  { at: 1.0, pos: [5.2, -7.2, 3.4], target: [11.6, -11.0, 1.6] }, // among the corner pair
+  { at: 1.0, pos: [15, -26, 15], target: [0, -1, 1] }, // the first ring whole, a crown on the drawing
 ];
 
-/** the rake swung across the field, striking into the niches the camera faces */
+/**
+ * the rake swung nearly into the east row's facing, so the standing cells
+ * read as a receding rhythm of lit cups — each bowl cross-lit, the far
+ * row beyond the corner left dark
+ */
 const RAKE_END = {
   ...LIGHTING.rake,
-  sun: { ...LIGHTING.rake.sun, azimuthDeg: 130 },
+  sun: { ...LIGHTING.rake.sun, azimuthDeg: 195 },
 };
 
 export function createScene5(
@@ -65,10 +69,11 @@ export function createScene5(
     const rise = span(p, 0.12, 0.78);
     rig.update((tier) => (tier === 1 ? rise : 0));
 
-    // the ink dissolves as matter rises
+    // the ink recedes as matter rises — but never quite leaves: the rest of
+    // the vault is still only a drawing, and the standing tier stands on it
     if (extras.planLines) {
       const m = extras.planLines.material as LineBasicMaterial;
-      m.opacity = 0.85 * (1 - span(p, 0.15, 0.7));
+      m.opacity = 0.85 - 0.7 * span(p, 0.15, 0.7);
       extras.planLines.visible = m.opacity > 0.01;
     }
 

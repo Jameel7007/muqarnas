@@ -1,4 +1,4 @@
-import { Vector3 } from 'three';
+import { Vector3, type LineBasicMaterial, type LineSegments } from 'three';
 import { LIGHTING, lerpLighting, type VaultStage } from '@muqarnas/render';
 import { cascadeTiers, type RisingVaultRig } from './rig.js';
 
@@ -25,6 +25,8 @@ export interface Scene6Parts {
   readonly rig: RisingVaultRig;
   /** Height of the crown ring — the display geometry's top. */
   readonly crownZ: number;
+  /** The faint drawing the first tier stands on; consumed as the rest rises. */
+  readonly planLines?: LineSegments;
 }
 
 export interface Scene6Dom {
@@ -50,8 +52,8 @@ export function climbCurve(g: number, maxTier: number): (tier: number) => number
 
 /** Scene 5 hands over at this key; scene 6 must open exactly there. */
 const HANDOFF: { pos: [number, number, number]; target: [number, number, number] } = {
-  pos: [5.2, -7.2, 3.4],
-  target: [11.6, -11.0, 1.6],
+  pos: [15, -26, 15],
+  target: [0, -1, 1],
 };
 
 /** Scene 7 opens under this hour; the ascent finishes into it. */
@@ -85,6 +87,13 @@ export function createScene6(parts: Scene6Parts, stage: VaultStage, dom: Scene6D
     // the climb: one scalar, seventeen rings
     parts.rig.update(climbCurve(span(p, 0.05, 0.78), parts.rig.maxTier));
 
+    // the drawing is consumed by what it becomes
+    if (parts.planLines) {
+      const m = parts.planLines.material as LineBasicMaterial;
+      m.opacity = 0.15 * (1 - span(p, 0.05, 0.45));
+      parts.planLines.visible = m.opacity > 0.01;
+    }
+
     // camera
     let sg = 0;
     while (sg < path.length - 2 && p > path[sg + 1]!.at) sg++;
@@ -105,7 +114,7 @@ export function createScene6(parts: Scene6Parts, stage: VaultStage, dom: Scene6D
       toRake > 0
         ? lerpLighting(LIGHTING.court, RAKE_A, toRake)
         : lerpLighting(
-            { ...LIGHTING.rake, sun: { ...LIGHTING.rake.sun, azimuthDeg: 130 } },
+            { ...LIGHTING.rake, sun: { ...LIGHTING.rake.sun, azimuthDeg: 195 } },
             LIGHTING.court,
             toCourt,
           ),
