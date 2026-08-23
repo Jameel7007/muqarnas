@@ -63,13 +63,15 @@ export function withAoAttribute(geometry: BufferGeometry): BufferGeometry {
 
 /**
  * The glaze map: Takht-i Sulaymān's cells wore fired colour on their curved
- * canopy. Mark every roof corner of the display geometry (non-indexed,
- * three corners per lifted triangle, in the lift's order — the same
- * convention the rig depends on) so the plaster can carry its wash.
+ * canopy, and the tilework mixed its blues — so the wash alternates
+ * turquoise and cobalt cell by cell. Mark every roof corner of the display
+ * geometry (non-indexed, three corners per lifted triangle, in the lift's
+ * order — the same convention the rig depends on): paint = 1 turquoise,
+ * paint = 2 cobalt, 0 bare plaster.
  */
 export function withPaintAttribute(
   displayGeometry: BufferGeometry,
-  tris: readonly { role: 'facet' | 'roof' | 'wall' }[],
+  tris: readonly { role: 'facet' | 'roof' | 'wall'; cell?: number }[],
 ): BufferGeometry {
   const count = displayGeometry.getAttribute('position').count;
   if (count !== tris.length * 3) {
@@ -78,9 +80,10 @@ export function withPaintAttribute(
   const paint = new Float32Array(count);
   for (let t = 0; t < tris.length; t++) {
     if (tris[t]!.role === 'roof') {
-      paint[t * 3] = 1;
-      paint[t * 3 + 1] = 1;
-      paint[t * 3 + 2] = 1;
+      const hue = ((tris[t]!.cell ?? 0) % 3 === 1 ? 2 : 1);
+      paint[t * 3] = hue;
+      paint[t * 3 + 1] = hue;
+      paint[t * 3 + 2] = hue;
     }
   }
   displayGeometry.setAttribute('paint', new BufferAttribute(paint, 1));
