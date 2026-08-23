@@ -99,20 +99,31 @@ export function withPaintAttribute(
   const glow = new Float32Array(count);
 
   // pass one: hues, facet frames, and each cell's apex (its roof's peak).
-  // Facet corners are grouped by their plane (cell + normal + offset), so
-  // a facet split by the canonical vertical subdivision still reads as ONE
-  // field — and the ornament can be fitted to it, not cropped by it.
+  // Facet triangles are grouped into panels by CONNECTIVITY — same cell,
+  // same facing, sharing a vertex (positions are bit-exact from the
+  // lattice, so no tolerance is needed). An earlier cut keyed on a
+  // quantized plane offset, and any facet near a rounding boundary split
+  // into two half-fields, each centring a cropped star: quantization
+  // bugs deserve exact answers.
   const apex = new Map<number, [number, number, number]>();
-  interface FacetField {
-    corners: number[];
-    u: number[];
-    v: number[];
-    uMin: number;
-    uMax: number;
-    vMin: number;
-    vMax: number;
-  }
-  const fields = new Map<string, FacetField>();
+  const facetTris: number[] = [];
+  const parent: number[] = [];
+  const find = (a: number): number => {
+    let r = a;
+    while (parent[r] !== r) r = parent[r]!;
+    while (parent[a] !== r) {
+      const next = parent[a]!;
+      parent[a] = r;
+      a = next;
+    }
+    return r;
+  };
+  const union = (a: number, b: number) => {
+    parent[find(a)] = find(b);
+  };
+  const cornerU = new Float32Array(count);
+  const buckets = new Map<string, number>();
+
   for (let t = 0; t < tris.length; t++) {
     const role = tris[t]!.role;
     const cell = tris[t]!.cell ?? 0;
@@ -126,6 +137,9 @@ export function withPaintAttribute(
         if (!best || z > best[2]) apex.set(cell, [pos.getX(i), pos.getY(i), z]);
       }
     } else if (role === 'facet') {
+      const local = facetTris.length;
+      facetTris.push(t);
+      parent.push(local);
       for (let c = 0; c < 3; c++) {
         const i = t * 3 + c;
         // horizontal tangent of the facet plane: up × normal — with a
@@ -140,23 +154,38 @@ export function withPaintAttribute(
           tx = -tx;
           ty = -ty;
         }
-        const u = pos.getX(i) * tx + pos.getY(i) * ty;
-        const v = pos.getZ(i);
-        const d = pos.getX(i) * (nx / len) + pos.getY(i) * (ny / len);
-        const key = `${cell}|${Math.round((nx / len) * 8)},${Math.round((ny / len) * 8)}|${Math.round(d * 32)}`;
-        let f = fields.get(key);
-        if (!f) {
-          f = { corners: [], u: [], v: [], uMin: Infinity, uMax: -Infinity, vMin: Infinity, vMax: -Infinity };
-          fields.set(key, f);
-        }
-        f.corners.push(i);
-        f.u.push(u);
-        f.v.push(v);
-        f.uMin = Math.min(f.uMin, u);
-        f.uMax = Math.max(f.uMax, u);
-        f.vMin = Math.min(f.vMin, v);
-        f.vMax = Math.max(f.vMax, v);
+        cornerU[i] = pos.getX(i) * tx + pos.getY(i) * ty;
+        const key = `${cell}|${Math.round((nx / len) * 8)},${Math.round((ny / len) * 8)}|${pos.getX(i)},${pos.getY(i)},${pos.getZ(i)}`;
+        const seen = buckets.get(key);
+        if (seen === undefined) buckets.set(key, local);
+        else union(local, seen);
       }
+    }
+  }
+
+  interface FacetField {
+    corners: number[];
+    uMin: number;
+    uMax: number;
+    vMin: number;
+    vMax: number;
+  }
+  const fields = new Map<number, FacetField>();
+  for (let local = 0; local < facetTris.length; local++) {
+    const root = find(local);
+    let f = fields.get(root);
+    if (!f) {
+      f = { corners: [], uMin: Infinity, uMax: -Infinity, vMin: Infinity, vMax: -Infinity };
+      fields.set(root, f);
+    }
+    const t = facetTris[local]!;
+    for (let c = 0; c < 3; c++) {
+      const i = t * 3 + c;
+      f.corners.push(i);
+      f.uMin = Math.min(f.uMin, cornerU[i]!);
+      f.uMax = Math.max(f.uMax, cornerU[i]!);
+      f.vMin = Math.min(f.vMin, pos.getZ(i));
+      f.vMax = Math.max(f.vMax, pos.getZ(i));
     }
   }
 
@@ -170,10 +199,9 @@ export function withPaintAttribute(
     const uc = (f.uMin + f.uMax) / 2;
     const vc = (f.vMin + f.vMax) / 2;
     const r = Math.max(Math.min((f.uMax - f.uMin) / 2, (f.vMax - f.vMin) / 2), 1e-3);
-    for (let k = 0; k < f.corners.length; k++) {
-      const i = f.corners[k]!;
-      orn[i * 3] = (f.u[k]! - uc) / r;
-      orn[i * 3 + 1] = (f.v[k]! - vc) / r;
+    for (const i of f.corners) {
+      orn[i * 3] = (cornerU[i]! - uc) / r;
+      orn[i * 3 + 1] = (pos.getZ(i) - vc) / r;
       orn[i * 3 + 2] = 1;
     }
   }

@@ -43,11 +43,26 @@ interface CamKey {
   readonly target: [number, number, number];
 }
 
+/**
+ * The presentation: "a vault stands" now means seeing all of it, in the
+ * round — a stately orbit around the complete building, crown to base
+ * ring in frame the whole way, easing inward as it circles and landing
+ * exactly on the descent's first key.
+ */
+const ORBIT = {
+  until: 0.26,
+  thetaStart: (116.4 * Math.PI) / 180,
+  thetaEnd: (286.4 * Math.PI) / 180, // atan2(-34, 10): the descent key's azimuth
+  rStart: 58,
+  rEnd: 35.4, // the descent key's ground radius
+  zStart: 18,
+  zEnd: 30,
+  targetStart: new Vector3(0, 0, 15),
+  targetEnd: new Vector3(0, 0, 6),
+};
+
 const CAMERA_PATH: CamKey[] = [
-  // the full portrait: the one frame in the piece that holds the whole
-  // building, base to crown ring — "a vault stands" means all of it
-  { at: 0.0, pos: [26, -38, 20], target: [0, 0, 15] },
-  { at: 0.24, pos: [10, -34, 30], target: [0, 0, 6] }, // drifting upward as it descends
+  { at: 0.26, pos: [10, -34, 30], target: [0, 0, 6] }, // drifting upward as it descends
   { at: 0.5, pos: [0, -6, 56], target: [0, 0, 0] }, // overhead: the drawing again
   { at: 0.76, pos: [-24, -27, 20], target: [0, 0, 8] }, // down the other side
   { at: 1.0, pos: [-26, -17, 7], target: [0, 0, 12] }, // looking up at the second building
@@ -82,14 +97,22 @@ export function createScene7(parts: Scene7Parts, stage: VaultStage, dom: Scene7D
       parts.planLines.visible = m.opacity > 0.01;
     }
 
-    // camera
-    let seg = 0;
-    while (seg < CAMERA_PATH.length - 2 && p > CAMERA_PATH[seg + 1]!.at) seg++;
-    const a = CAMERA_PATH[seg]!;
-    const b = CAMERA_PATH[seg + 1]!;
-    const t = smooth((p - a.at) / (b.at - a.at));
-    pos.set(...a.pos).lerp(new Vector3(...b.pos), t);
-    tgt.set(...a.target).lerp(new Vector3(...b.target), t);
+    // camera: the orbit presents the whole building, then the keys descend
+    if (p < ORBIT.until) {
+      const t = smooth(p / ORBIT.until);
+      const theta = ORBIT.thetaStart + (ORBIT.thetaEnd - ORBIT.thetaStart) * t;
+      const r = ORBIT.rStart + (ORBIT.rEnd - ORBIT.rStart) * t;
+      pos.set(r * Math.cos(theta), r * Math.sin(theta), ORBIT.zStart + (ORBIT.zEnd - ORBIT.zStart) * t);
+      tgt.copy(ORBIT.targetStart).lerp(ORBIT.targetEnd, t);
+    } else {
+      let seg = 0;
+      while (seg < CAMERA_PATH.length - 2 && p > CAMERA_PATH[seg + 1]!.at) seg++;
+      const a = CAMERA_PATH[seg]!;
+      const b = CAMERA_PATH[seg + 1]!;
+      const t = smooth((p - a.at) / (b.at - a.at));
+      pos.set(...a.pos).lerp(new Vector3(...b.pos), t);
+      tgt.set(...a.target).lerp(new Vector3(...b.target), t);
+    }
     stage.camera.position.copy(pos);
     stage.controls.target.copy(tgt);
     stage.controls.update();
