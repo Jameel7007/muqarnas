@@ -161,16 +161,19 @@ export function withPaintAttribute(
   }
 
   // fit the frame: each field's coordinates centred on it and measured in
-  // its own half-width, so one whole figure sits in every field with
-  // margin — painting composed to the panel, never cropped by it
+  // its SMALLER half-dimension, so one whole figure sits in every field
+  // with margin — sized by width on tall panels, by height on wide ones
+  // (the 180°-facet cells make double-width fields whose width-sized
+  // stars overflowed the panel and smeared). Painting composed to the
+  // panel, never cropped by it.
   for (const f of fields.values()) {
     const uc = (f.uMin + f.uMax) / 2;
     const vc = (f.vMin + f.vMax) / 2;
-    const hw = Math.max((f.uMax - f.uMin) / 2, 1e-3);
+    const r = Math.max(Math.min((f.uMax - f.uMin) / 2, (f.vMax - f.vMin) / 2), 1e-3);
     for (let k = 0; k < f.corners.length; k++) {
       const i = f.corners[k]!;
-      orn[i * 3] = (f.u[k]! - uc) / hw;
-      orn[i * 3 + 1] = (f.v[k]! - vc) / hw;
+      orn[i * 3] = (f.u[k]! - uc) / r;
+      orn[i * 3 + 1] = (f.v[k]! - vc) / r;
       orn[i * 3 + 2] = 1;
     }
   }

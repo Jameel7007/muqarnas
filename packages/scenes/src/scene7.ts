@@ -44,7 +44,9 @@ interface CamKey {
 }
 
 const CAMERA_PATH: CamKey[] = [
-  { at: 0.0, pos: [20, -26, 14], target: [0, 0, 8] }, // the vault completes
+  // the full portrait: the one frame in the piece that holds the whole
+  // building, base to crown ring — "a vault stands" means all of it
+  { at: 0.0, pos: [26, -38, 20], target: [0, 0, 15] },
   { at: 0.24, pos: [10, -34, 30], target: [0, 0, 6] }, // drifting upward as it descends
   { at: 0.5, pos: [0, -6, 56], target: [0, 0, 0] }, // overhead: the drawing again
   { at: 0.76, pos: [-24, -27, 20], target: [0, 0, 8] }, // down the other side

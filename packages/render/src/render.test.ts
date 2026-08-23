@@ -115,25 +115,27 @@ describe('the paint map (the painted vault)', () => {
     }
   });
 
-  it('stencils exactly the facets, each field centred in its own frame', () => {
-    let uMin = Infinity;
-    let uMax = -Infinity;
+  it('stencils exactly the facets, each field centred and sized to its smaller side', () => {
+    let reach = 0;
     for (let t = 0; t < vault.tris.length; t++) {
       const isFacet = vault.tris[t]!.role === 'facet';
       for (let c = 0; c < 3; c++) {
         expect(orn.getZ(t * 3 + c)).toBe(isFacet ? 1 : 0);
         if (isFacet) {
           const u = orn.getX(t * 3 + c);
-          // fitted coordinates: the field's own width maps to exactly ±1
-          expect(Math.abs(u)).toBeLessThanOrEqual(1 + 1e-6);
-          expect(Number.isFinite(orn.getY(t * 3 + c))).toBe(true);
-          uMin = Math.min(uMin, u);
-          uMax = Math.max(uMax, u);
+          const v = orn.getY(t * 3 + c);
+          expect(Number.isFinite(u)).toBe(true);
+          expect(Number.isFinite(v)).toBe(true);
+          // the smaller dimension maps to ±1, so the unit medallion always
+          // fits; the longer one may exceed it, never absurdly
+          expect(Math.min(Math.abs(u), Math.abs(v))).toBeLessThanOrEqual(1 + 1e-6);
+          expect(Math.abs(u)).toBeLessThanOrEqual(8);
+          expect(Math.abs(v)).toBeLessThanOrEqual(8);
+          reach = Math.max(reach, Math.min(Math.abs(u), 1), Math.min(Math.abs(v), 1));
         }
       }
     }
-    expect(uMin).toBeCloseTo(-1, 6);
-    expect(uMax).toBeCloseTo(1, 6);
+    expect(reach).toBeCloseTo(1, 6); // the field's edge really is at ±1
   });
 
   it('gilds each bowl brightest at its apex, fading with distance', () => {
