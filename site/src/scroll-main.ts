@@ -16,11 +16,13 @@ import {
   ScrollTrigger,
   bindScrubbedScene,
   createScene1,
+  createScene2,
   createScene5,
   createScene7,
   gsap,
   makePlanLines,
   makeScene1Objects,
+  makeScene2Objects,
 } from '@muqarnas/scenes';
 
 /**
@@ -103,6 +105,9 @@ async function main() {
   const s1 = makeScene1Objects(material, { half: PLATE_FIELD_SPAN.toNumber() });
   stage.scene.add(s1.group);
 
+  const s2 = makeScene2Objects();
+  stage.scene.add(s2.group);
+
   // each track shows only its scene's world — objects and captions — before
   // the scene runs, so the scenes' own toggles (mesh swaps, ink fades,
   // caption spans) still win within it. Captions must be swept because a
@@ -111,13 +116,17 @@ async function main() {
   const caps = (...sels: string[]) => sels.map(el);
   const worlds = {
     one: { objects: [s1.group] as Object3D[], caps: caps('#cap-1a', '#cap-1b', '#cap-1c') },
+    two: {
+      objects: [s2.group] as Object3D[],
+      caps: caps('#cap-2a', '#cap-2b', '#cap-2c', '#cap-2d'),
+    },
     five: { objects: [meshA, planLines] as Object3D[], caps: caps('#cap-a', '#cap-b') },
     seven: {
       objects: [meshA, meshB, planLines] as Object3D[],
       caps: caps('#cap-7a', '#cap-7b', '#cap-7c'),
     },
   };
-  const everything = [s1.group, meshA, meshB, planLines];
+  const everything = [s1.group, s2.group, meshA, meshB, planLines];
   const allCaps = Object.values(worlds).flatMap((w) => w.caps);
   const show = (world: { objects: Object3D[]; caps: HTMLElement[] }) => {
     for (const o of everything) o.visible = world.objects.includes(o);
@@ -133,6 +142,18 @@ async function main() {
     show(worlds.one);
     scene1(p);
     el('#hint').style.opacity = p > 0.02 ? '0' : '1';
+  });
+
+  const scene2 = createScene2(s2, stage, {
+    captionA: el('#cap-2a'),
+    captionB: el('#cap-2b'),
+    captionC: el('#cap-2c'),
+    captionD: el('#cap-2d'),
+    numerals: el('#cap-2c-num'),
+  });
+  bindScrubbedScene(el('#scene2-track'), (p) => {
+    show(worlds.two);
+    scene2(p);
   });
 
   const scene5 = createScene5(

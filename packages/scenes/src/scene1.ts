@@ -1,7 +1,5 @@
 import {
   BoxGeometry,
-  BufferAttribute,
-  BufferGeometry,
   Group,
   LineBasicMaterial,
   LineSegments,
@@ -11,6 +9,7 @@ import {
   type Material,
 } from 'three';
 import { LIGHTING, lerpLighting, withAoAttribute, type VaultStage } from '@muqarnas/render';
+import { drawOn, inkLines, smooth, span } from './ink.js';
 
 /**
  * SCENE 1 — THE SQUARE AND THE CIRCLE. The argument.
@@ -43,27 +42,8 @@ export interface Scene1Dom {
   readonly captionC?: HTMLElement; // the zone of transition
 }
 
-const INK = 0xe8e2d5;
 const CIRCLE_SEGMENTS = 96;
 const HATCHES_PER_CORNER = 5;
-
-const smooth = (t: number) => {
-  const x = Math.min(Math.max(t, 0), 1);
-  return x * x * (3 - 2 * x);
-};
-const span = (p: number, a: number, b: number) => smooth((p - a) / (b - a));
-
-/** Segments ordered so setDrawRange draws the figure on, stroke by stroke. */
-function inkLines(coords: number[], opacity = 0.85): LineSegments {
-  const g = new BufferGeometry();
-  g.setAttribute('position', new BufferAttribute(new Float32Array(coords), 3));
-  const lines = new LineSegments(
-    g,
-    new LineBasicMaterial({ color: INK, transparent: true, opacity }),
-  );
-  lines.renderOrder = 2;
-  return lines;
-}
 
 function squareCoords(h: number, z: number): number[] {
   const c: [number, number][] = [
@@ -113,12 +93,6 @@ function cornerHatchCoords(h: number, r: number, z: number): number[] {
     }
   }
   return coords;
-}
-
-/** Draw the first `t` of a stroke-ordered ink figure. */
-function drawOn(lines: LineSegments, t: number): void {
-  const total = lines.geometry.getAttribute('position').count;
-  lines.geometry.setDrawRange(0, 2 * Math.round((total / 2) * Math.min(Math.max(t, 0), 1)));
 }
 
 export function makeScene1Objects(
