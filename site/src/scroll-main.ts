@@ -194,10 +194,19 @@ async function main() {
     captionB: el('#cap-1b'),
     captionC: el('#cap-1c'),
   });
+  // the frontispiece: title, definition, a breath of history — drifting
+  // away as the first drawing begins
+  bindScrubbedScene(el('#intro-track'), (p) => {
+    const fade = 1 - Math.min(1, Math.max(0, (p - 0.12) / 0.55));
+    const intro = el('#intro');
+    intro.style.opacity = String(fade * fade * (3 - 2 * fade));
+    intro.style.transform = `translateY(${-4.5 * (1 - fade)}rem)`;
+    el('#hint').style.opacity = p > 0.04 ? '0' : '1';
+  });
+
   bindScrubbedScene(el('#scene1-track'), (p) => {
     show(worlds.one);
     scene1(p);
-    el('#hint').style.opacity = p > 0.02 ? '0' : '1';
   });
 
   const scene2 = createScene2(s2, stage, {
