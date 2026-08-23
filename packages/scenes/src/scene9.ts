@@ -99,7 +99,7 @@ export function createScene9(
 
     // the light goes: ember, then the ember banked down to its coals
     const base = lerpLighting(RAKE_150, LIGHTING.ember, span(p, 0.02, 0.16));
-    const dim = 1 - 0.72 * span(p, 0.55, 0.75);
+    const dim = 1 - 0.58 * span(p, 0.55, 0.75);
     stage.applyLighting({ ...base, exposure: base.exposure * dim });
 
     // the ink needs no light: the plan comes back through the dark,

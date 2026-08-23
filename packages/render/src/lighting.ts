@@ -28,6 +28,11 @@ import { Color } from 'three';
  * vault — hotter key, honeyed ground bounce, skies a touch cooler so the
  * warmth and the glaze both carry. The instruments, the three states, and
  * everything forbidden are unchanged.
+ *
+ * v2.1 (same review): brightened throughout — the from-beneath views and
+ * the late scenes ran too dark. More exposure, a stronger ground bounce
+ * and fill (they carry the shadow floor under the vault), and a hotter
+ * key so the lift raises the caves without flattening the carving.
  */
 
 export interface LightingState {
@@ -48,24 +53,24 @@ export interface LightingState {
 export const LIGHTING: Record<'rake' | 'court' | 'ember', LightingState> = {
   rake: {
     name: 'rake',
-    exposure: 1.15,
-    hemisphere: { sky: 0x1b2130, ground: 0xcfa267, intensity: 0.55 },
-    sun: { color: 0xffc37e, intensity: 3.2, azimuthDeg: 35, elevationDeg: -15 },
-    fill: { color: 0x7f93ad, intensity: 0.15 },
+    exposure: 1.28,
+    hemisphere: { sky: 0x1b2130, ground: 0xcfa267, intensity: 0.75 },
+    sun: { color: 0xffc37e, intensity: 3.6, azimuthDeg: 35, elevationDeg: -15 },
+    fill: { color: 0x7f93ad, intensity: 0.26 },
   },
   court: {
     name: 'court',
-    exposure: 1.05,
-    hemisphere: { sky: 0x333c4e, ground: 0xdec09a, intensity: 1.45 },
-    sun: { color: 0xffe9c2, intensity: 0.9, azimuthDeg: 20, elevationDeg: -8 },
-    fill: { color: 0x8fa3bd, intensity: 0.3 },
+    exposure: 1.14,
+    hemisphere: { sky: 0x333c4e, ground: 0xdec09a, intensity: 1.6 },
+    sun: { color: 0xffe9c2, intensity: 1.0, azimuthDeg: 20, elevationDeg: -8 },
+    fill: { color: 0x8fa3bd, intensity: 0.36 },
   },
   ember: {
     name: 'ember',
-    exposure: 1.0,
-    hemisphere: { sky: 0x222839, ground: 0xa67a52, intensity: 0.4 },
-    sun: { color: 0xff7f42, intensity: 2.5, azimuthDeg: 62, elevationDeg: -18 },
-    fill: { color: 0x5d6d85, intensity: 0.12 },
+    exposure: 1.12,
+    hemisphere: { sky: 0x222839, ground: 0xa67a52, intensity: 0.52 },
+    sun: { color: 0xff7f42, intensity: 2.8, azimuthDeg: 62, elevationDeg: -18 },
+    fill: { color: 0x5d6d85, intensity: 0.2 },
   },
 };
 
