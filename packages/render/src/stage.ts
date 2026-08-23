@@ -53,16 +53,19 @@ export async function createVaultStage(container: HTMLElement): Promise<VaultSta
   const sun = new THREE.DirectionalLight();
   sun.target.position.copy(LIGHT_TARGET);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
+  // close-up scenes live a hand's width from the plaster: a fine map over a
+  // frustum fitted to the built field, blurred enough that terminators read
+  // as penumbra rather than texel staircases
+  sun.shadow.mapSize.set(4096, 4096);
   sun.shadow.camera.near = 1;
   sun.shadow.camera.far = 220;
-  sun.shadow.camera.left = -36;
-  sun.shadow.camera.right = 36;
-  sun.shadow.camera.top = 44;
-  sun.shadow.camera.bottom = -44;
+  sun.shadow.camera.left = -26;
+  sun.shadow.camera.right = 26;
+  sun.shadow.camera.top = 30;
+  sun.shadow.camera.bottom = -30;
   sun.shadow.bias = -0.0004;
   sun.shadow.normalBias = 0.035;
-  sun.shadow.radius = 4;
+  sun.shadow.radius = 6;
   scene.add(sun);
   scene.add(sun.target);
 
