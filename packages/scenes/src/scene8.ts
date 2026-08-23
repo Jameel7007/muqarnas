@@ -33,9 +33,9 @@ const span = (p: number, a: number, b: number) => smooth((p - a) / (b - a));
 /** Scene 7 hands over at RAKE_B's hour; the day leaves it and returns to it. */
 export const DAY_START_DEG = 150;
 
-/** The key's azimuth through the scene: one full turn, eased at both ends. */
+/** The key's azimuth: one full turn, eased, beginning once the camera stands. */
 export function dayAzimuth(p: number): number {
-  return DAY_START_DEG + 360 * span(p, 0.06, 0.94);
+  return DAY_START_DEG + 360 * span(p, 0.1, 0.94);
 }
 
 /** The whole day is one field of one state — the lock, as a function. */
@@ -43,15 +43,36 @@ export function dayState(p: number): LightingState {
   return { ...LIGHTING.rake, sun: { ...LIGHTING.rake.sun, azimuthDeg: dayAzimuth(p) } };
 }
 
-/** Beneath, near the axis: the funnel as a clock face. */
+/**
+ * The scene ARRIVES before it stands: a short approach out of scene 7's
+ * final stance, passing under the rim into the beneath position — the
+ * spatial jump from outside to underneath was the one abrupt thing left
+ * in the cut. Once the day begins, the camera is locked: nothing moves
+ * except the key's azimuth, exactly as the language wrote it.
+ */
+const ARRIVE_FROM = { pos: [-26, -17, 7] as const, target: [0, 0, 12] as const };
 const CAMERA = { pos: [0.5, -2.5, -16] as const, target: [0, 0, 20] as const };
+
+const smoothstep = (t: number) => {
+  const x = Math.min(Math.max(t, 0), 1);
+  return x * x * (3 - 2 * x);
+};
 
 export function createScene8(parts: Scene8Parts, stage: VaultStage, dom: Scene8Dom = {}) {
   return (p: number): void => {
     parts.rig.update(cascadeTiers(1, parts.rig.maxTier));
 
-    stage.camera.position.set(...CAMERA.pos);
-    stage.controls.target.set(...CAMERA.target);
+    const arrive = smoothstep(p / 0.08);
+    stage.camera.position.set(
+      ARRIVE_FROM.pos[0] + (CAMERA.pos[0] - ARRIVE_FROM.pos[0]) * arrive,
+      ARRIVE_FROM.pos[1] + (CAMERA.pos[1] - ARRIVE_FROM.pos[1]) * arrive,
+      ARRIVE_FROM.pos[2] + (CAMERA.pos[2] - ARRIVE_FROM.pos[2]) * arrive,
+    );
+    stage.controls.target.set(
+      ARRIVE_FROM.target[0] + (CAMERA.target[0] - ARRIVE_FROM.target[0]) * arrive,
+      ARRIVE_FROM.target[1] + (CAMERA.target[1] - ARRIVE_FROM.target[1]) * arrive,
+      ARRIVE_FROM.target[2] + (CAMERA.target[2] - ARRIVE_FROM.target[2]) * arrive,
+    );
     stage.controls.update();
 
     stage.applyLighting(dayState(p));

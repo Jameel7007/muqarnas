@@ -158,8 +158,9 @@ const CAMERA_PATH: CamKey[] = [
   { at: 0.18, pos: [8.6, 6.4, 9], target: [9.3, 9.3, 0] }, // down to the corner
   { at: 0.32, pos: [7.4, 4.6, 13], target: [7.6, 7.6, 0] }, // drifting in with the writing
   { at: 0.52, pos: [3.4, 0.2, 24], target: [4.2, 4.2, 0] }, // the quarter nearly whole
-  { at: 0.62, pos: [0, -5, 44], target: [0, 0, 0] }, // overhead for the turning
-  { at: 0.86, pos: [0, -7, 58], target: [0, 0, 0] }, // scene 5's opening, exactly
+  // aimed low, so the turning quarter sweeps above the caption band
+  { at: 0.62, pos: [0, -6, 46], target: [0, -3.2, 0] },
+  { at: 0.86, pos: [0, -7, 58], target: [0, 0, 0] }, // scene 5's opening
   { at: 1.0, pos: [0, -7, 58], target: [0, 0, 0] },
 ];
 
