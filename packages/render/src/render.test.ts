@@ -78,6 +78,14 @@ describe('baked ambient occlusion (the lighting experiment, measured)', () => {
     }
   });
 
+  it('leaves the geometry’s triangle order untouched (the rig depends on it)', async () => {
+    const g2 = vaultToGeometry(vault);
+    const before = Array.from((g2.getIndex()!.array as Uint32Array | Uint16Array).slice(0, 300));
+    await bakeVertexAO(g2, { rays: 8, maxDistance: 4, seed: 3 });
+    const after = Array.from((g2.getIndex()!.array as Uint32Array | Uint16Array).slice(0, 300));
+    expect(after).toEqual(before);
+  });
+
   it('is deterministic for a fixed seed', async () => {
     const g2 = vaultToGeometry(vault);
     const a = await bakeVertexAO(g2, { rays: 16, maxDistance: 5, seed: 42 });

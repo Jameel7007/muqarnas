@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>muqarnas — the lift</title>
+    <style>
+      #stage {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+      }
+      .track {
+        position: relative;
+        z-index: 1;
+        pointer-events: none;
+      }
+      #scene5-track {
+        height: 520vh;
+      }
+      .runway {
+        height: 60vh;
+      }
+      .scene-caption {
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 9vh;
+        max-width: 34rem;
+        text-align: center;
+        opacity: 0;
+        z-index: 2;
+        pointer-events: none;
+      }
+      .scene-caption .num {
+        display: block;
+        font-size: 0.7rem;
+        letter-spacing: 0.5em;
+        color: var(--accent);
+        margin-bottom: 0.55rem;
+        text-transform: uppercase;
+      }
+      .scene-caption p {
+        font-size: 1.02rem;
+        color: var(--ink);
+        font-style: italic;
+        line-height: 1.7;
+      }
+      #loader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.9rem;
+        background: var(--bg);
+        z-index: 5;
+        transition: opacity 0.9s ease;
+      }
+      #loader.done {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #hint {
+        position: fixed;
+        bottom: 2.2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.68rem;
+        letter-spacing: 0.4em;
+        text-transform: uppercase;
+        color: var(--dim);
+        z-index: 2;
+        transition: opacity 0.6s ease;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+
+    <div id="loader">
+      <h1>Muqarnas</h1>
+      <span class="status ok" id="load-status">…</span>
+    </div>
+
+    <div class="scene-caption" id="cap-a">
+      <span class="num">IV → V</span>
+      <p>This is not a rosette. It is a building, seen from above.</p>
+    </div>
+    <div class="scene-caption" id="cap-b">
+      <span class="num">V — the lift</span>
+      <p>The first tier stands. Here it begins in the corners — every valid reading of the
+      plate starts there, two cells to a corner.</p>
+    </div>
+    <span id="hint">scroll</span>
+
+    <div class="track" id="scene5-track"></div>
+    <div class="track runway"></div>
+  </body>
+  <script type="module" src="/src/scroll-main.ts"></script>
+</html>

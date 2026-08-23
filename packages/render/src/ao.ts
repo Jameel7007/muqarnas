@@ -40,7 +40,9 @@ export async function bakeVertexAO(
   const yieldEvery = opts.yieldEvery ?? 1500;
   const rand = mulberry32(opts.seed ?? 1427);
 
-  const bvh = new MeshBVH(geometry);
+  // indirect: the BVH keeps its own ordering and leaves the geometry's
+  // index untouched — consumers (the scene rig) rely on triangle order
+  const bvh = new MeshBVH(geometry, { indirect: true });
   const pos = geometry.getAttribute('position');
   const nrm = geometry.getAttribute('normal');
   const count = pos.count;

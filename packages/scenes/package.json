@@ -1,0 +1,16 @@
+{
+  "name": "@muqarnas/scenes",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@muqarnas/lift": "*",
+    "@muqarnas/plan": "*",
+    "@muqarnas/render": "*",
+    "gsap": "^3.13.0",
+    "three": "^0.180.0"
+  }
+}

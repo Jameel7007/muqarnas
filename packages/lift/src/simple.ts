@@ -47,6 +47,8 @@ export interface CellSpec {
 export interface LiftedTriangle {
   readonly role: 'facet' | 'roof' | 'wall';
   readonly cell: number; // index into the specs array (-1 for joint geometry)
+  /** tier the triangle belongs to (walls carry the tier they serve) */
+  readonly tier?: number;
   /** debug provenance of the emission */
   readonly src?: string;
 }

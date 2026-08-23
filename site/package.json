@@ -9,8 +9,10 @@
     "preview": "vite preview --port 5175 --strictPort"
   },
   "dependencies": {
-    "@muqarnas/plan": "*",
     "@muqarnas/lift": "*",
-    "@muqarnas/render": "*"
+    "@muqarnas/plan": "*",
+    "@muqarnas/render": "*",
+    "@muqarnas/scenes": "*",
+    "lenis": "^1.3.0"
   }
 }

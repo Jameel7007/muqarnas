@@ -379,15 +379,15 @@ export function liftVault(
       if (degenerateB) {
         if (flip) b.tri(qa, qb, ra);
         else b.tri(qa, ra, qb);
-        tris.push({ role, cell: cellIdx });
+        tris.push({ role, cell: cellIdx, tier });
       } else if (degenerateA) {
         if (flip) b.tri(qa, qb, rb);
         else b.tri(qa, rb, qb);
-        tris.push({ role, cell: cellIdx });
+        tris.push({ role, cell: cellIdx, tier });
       } else {
         if (flip) b.quad(qa, qb, rb, ra);
         else b.quad(qa, ra, rb, qb);
-        tris.push({ role, cell: cellIdx }, { role, cell: cellIdx });
+        tris.push({ role, cell: cellIdx, tier }, { role, cell: cellIdx, tier });
       }
     }
   };
@@ -423,7 +423,7 @@ export function liftVault(
         const i2 = vAt(fb, zTag(tier, 0), zBase + GH);
         const i3 = vAt(fa, zTag(tier, 0), zBase + GH);
         b.quad(i0, i1, i2, i3);
-        tris.push({ role: 'facet', cell: cellIdx }, { role: 'facet', cell: cellIdx });
+        tris.push({ role: 'facet', cell: cellIdx, tier }, { role: 'facet', cell: cellIdx, tier });
       }
       // roof panels: curved sides A→C (tail A, head C = apex)
       const pa = generators(A1, C, Cop.sub(A1), C, Cop, zBase);
@@ -497,7 +497,7 @@ export function liftVault(
       if (x === y || y === z || x === z) return;
       if (flip) b.tri(x, z, y);
       else b.tri(x, y, z);
-      tris.push({ role: 'wall', cell: cellIdx, src: `band:${creaseTier}:${segLevel}` });
+      tris.push({ role: 'wall', cell: cellIdx, tier: creaseTier, src: `band:${creaseTier}:${segLevel}` });
     };
     for (let k = 0; k + 1 < poly.length; k++) fan(segStart, poly[k]!, poly[k + 1]!);
     if (segEnd !== poly[poly.length - 1]!) {
@@ -527,10 +527,10 @@ export function liftVault(
       b.quad(a0, b0, bF, aF);
       b.quad(aF, bF, b1, a1);
       tris.push(
-        { role: 'wall', cell: cellIdx, src: 'stack' },
-        { role: 'wall', cell: cellIdx, src: 'stack' },
-        { role: 'wall', cell: cellIdx, src: 'stack' },
-        { role: 'wall', cell: cellIdx, src: 'stack' },
+        { role: 'wall', cell: cellIdx, tier: m + 1, src: 'stack' },
+        { role: 'wall', cell: cellIdx, tier: m + 1, src: 'stack' },
+        { role: 'wall', cell: cellIdx, tier: m + 1, src: 'stack' },
+        { role: 'wall', cell: cellIdx, tier: m + 1, src: 'stack' },
       );
     }
   };
