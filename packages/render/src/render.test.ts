@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Iso, place, pt, type Plan } from '@muqarnas/plan';
 import { liftCurvedCells, liftVault, type CurvedCellSpec } from '@muqarnas/lift';
 import { bakeVertexAO } from './ao.js';
-import { toDisplayGeometry, vaultToGeometry } from './geometry.js';
+import { toDisplayGeometry, vaultToGeometry, withPaintAttribute } from './geometry.js';
 
 describe('vault → three geometry', () => {
   const plan: Plan = {
@@ -93,5 +93,50 @@ describe('baked ambient occlusion (the lighting experiment, measured)', () => {
     const b = await bakeVertexAO(g3, { rays: 16, maxDistance: 5, seed: 42 });
     expect(a.mean).toBe(b.mean);
     expect(a.min).toBe(b.min);
+  });
+});
+
+describe('the paint map (the painted vault)', () => {
+  const plan: Plan = {
+    sector: [pt(0, 0), pt(1, 0), pt(1, 1), pt(0, 1)],
+    placed: [place('square', 'cell', Iso.IDENTITY, 1)],
+  };
+  const vault = liftCurvedCells(plan, [{ placedIndex: 0, centralNode: 0 }]);
+  const display = toDisplayGeometry(vaultToGeometry(vault));
+  withPaintAttribute(display, vault.tris);
+  const paint = display.getAttribute('paint');
+  const orn = display.getAttribute('orn');
+  const glow = display.getAttribute('glow');
+
+  it('glazes exactly the roofs, one hue per cell', () => {
+    for (let t = 0; t < vault.tris.length; t++) {
+      const expected = vault.tris[t]!.role === 'roof' ? ((vault.tris[t]!.cell ?? 0) % 3 === 1 ? 2 : 1) : 0;
+      for (let c = 0; c < 3; c++) expect(paint.getX(t * 3 + c)).toBe(expected);
+    }
+  });
+
+  it('stencils exactly the facets, with sane local frames', () => {
+    for (let t = 0; t < vault.tris.length; t++) {
+      const isFacet = vault.tris[t]!.role === 'facet';
+      for (let c = 0; c < 3; c++) {
+        expect(orn.getZ(t * 3 + c)).toBe(isFacet ? 1 : 0);
+        if (isFacet) {
+          // v is height; a facet's own span stays within the cell's two modules
+          expect(orn.getY(t * 3 + c)).toBeGreaterThanOrEqual(-1e-9);
+          expect(orn.getY(t * 3 + c)).toBeLessThanOrEqual(2 + 1e-9);
+        }
+      }
+    }
+  });
+
+  it('gilds each bowl brightest at its apex, fading with distance', () => {
+    let top = 0;
+    for (let i = 0; i < glow.count; i++) {
+      const v = glow.getX(i);
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThanOrEqual(1);
+      top = Math.max(top, v);
+    }
+    expect(top).toBeCloseTo(1, 6); // the apex corner itself
   });
 });

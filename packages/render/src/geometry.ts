@@ -23,11 +23,13 @@ export function vaultToGeometry(vault: CurvedVault): BufferGeometry {
     flipped[t + 2] = vault.mesh.triangles[t + 1]!;
   }
   g.setIndex(flipped);
-  // ao defaults to fully open, paint to bare plaster, so materials work
-  // before any bake or glaze pass
-  const ao = new Float32Array(vault.mesh.positions.length / 3).fill(1);
-  g.setAttribute('ao', new BufferAttribute(ao, 1));
-  g.setAttribute('paint', new BufferAttribute(new Float32Array(vault.mesh.positions.length / 3), 1));
+  // ao defaults to fully open, paint/ornament/gilt to bare plaster, so
+  // materials work before any bake or glaze pass
+  const vcount = vault.mesh.positions.length / 3;
+  g.setAttribute('ao', new BufferAttribute(new Float32Array(vcount).fill(1), 1));
+  g.setAttribute('paint', new BufferAttribute(new Float32Array(vcount), 1));
+  g.setAttribute('orn', new BufferAttribute(new Float32Array(vcount * 3), 3));
+  g.setAttribute('glow', new BufferAttribute(new Float32Array(vcount), 1));
   g.computeVertexNormals();
   g.computeBoundingSphere();
   return g;
@@ -49,7 +51,7 @@ export function makeVaultMesh(geometry: BufferGeometry, material: Material): Mes
   return mesh;
 }
 
-/** Give any geometry the `ao`/`paint` attributes the plaster expects. */
+/** Give any geometry the `ao`/`paint`/`orn`/`glow` attributes the plaster expects. */
 export function withAoAttribute(geometry: BufferGeometry): BufferGeometry {
   const count = geometry.getAttribute('position').count;
   if (!geometry.getAttribute('ao')) {
@@ -58,16 +60,29 @@ export function withAoAttribute(geometry: BufferGeometry): BufferGeometry {
   if (!geometry.getAttribute('paint')) {
     geometry.setAttribute('paint', new BufferAttribute(new Float32Array(count), 1));
   }
+  if (!geometry.getAttribute('orn')) {
+    geometry.setAttribute('orn', new BufferAttribute(new Float32Array(count * 3), 3));
+  }
+  if (!geometry.getAttribute('glow')) {
+    geometry.setAttribute('glow', new BufferAttribute(new Float32Array(count), 1));
+  }
   return geometry;
 }
 
 /**
- * The glaze map: Takht-i Sulaymān's cells wore fired colour on their curved
- * canopy, and the tilework mixed its blues — so the wash alternates
- * turquoise and cobalt cell by cell. Mark every roof corner of the display
- * geometry (non-indexed, three corners per lifted triangle, in the lift's
- * order — the same convention the rig depends on): paint = 1 turquoise,
- * paint = 2 cobalt, 0 bare plaster.
+ * The paint map: Takht-i Sulaymān's cells wore fired colour on their
+ * curved canopy, painted ornament on the plaster, and gilt. From the
+ * lift's own data (non-indexed display geometry, three corners per lifted
+ * triangle, in the lift's order — the rig's convention) this emits:
+ *
+ *   paint — 1 turquoise / 2 cobalt on roof corners, alternating by cell
+ *           (the tilework mixed its blues); 0 bare plaster.
+ *   orn   — facet-local coordinates for the painted stencil: (u along the
+ *           facet's horizontal tangent, v = height, flag 1 on facets).
+ *           The pattern is periodic, so a facet cropping it mid-figure
+ *           reads as a panel edge — as painted panels really do.
+ *   glow  — gilt: each cell's bowl warms toward gold near its apex, the
+ *           highest point of that cell's roof.
  */
 export function withPaintAttribute(
   displayGeometry: BufferGeometry,
@@ -77,15 +92,57 @@ export function withPaintAttribute(
   if (count !== tris.length * 3) {
     throw new Error(`paint: display geometry (${count} corners) does not match ${tris.length} triangles`);
   }
+  const pos = displayGeometry.getAttribute('position');
+  const nrm = displayGeometry.getAttribute('normal');
   const paint = new Float32Array(count);
+  const orn = new Float32Array(count * 3);
+  const glow = new Float32Array(count);
+
+  // pass one: hues, facet frames, and each cell's apex (its roof's peak)
+  const apex = new Map<number, [number, number, number]>();
   for (let t = 0; t < tris.length; t++) {
-    if (tris[t]!.role === 'roof') {
-      const hue = ((tris[t]!.cell ?? 0) % 3 === 1 ? 2 : 1);
-      paint[t * 3] = hue;
-      paint[t * 3 + 1] = hue;
-      paint[t * 3 + 2] = hue;
+    const role = tris[t]!.role;
+    const cell = tris[t]!.cell ?? 0;
+    if (role === 'roof') {
+      const hue = cell % 3 === 1 ? 2 : 1;
+      for (let c = 0; c < 3; c++) {
+        const i = t * 3 + c;
+        paint[i] = hue;
+        const z = pos.getZ(i);
+        const best = apex.get(cell);
+        if (!best || z > best[2]) apex.set(cell, [pos.getX(i), pos.getY(i), z]);
+      }
+    } else if (role === 'facet') {
+      for (let c = 0; c < 3; c++) {
+        const i = t * 3 + c;
+        // horizontal tangent of the facet plane: up × normal
+        const nx = nrm.getX(i);
+        const ny = nrm.getY(i);
+        const len = Math.hypot(nx, ny) || 1;
+        const tx = -ny / len;
+        const ty = nx / len;
+        orn[i * 3] = pos.getX(i) * tx + pos.getY(i) * ty;
+        orn[i * 3 + 1] = pos.getZ(i);
+        orn[i * 3 + 2] = 1;
+      }
     }
   }
+
+  // pass two: the gilt falloff around each apex
+  for (let t = 0; t < tris.length; t++) {
+    if (tris[t]!.role !== 'roof') continue;
+    const a = apex.get(tris[t]!.cell ?? 0);
+    if (!a) continue;
+    for (let c = 0; c < 3; c++) {
+      const i = t * 3 + c;
+      const d = Math.hypot(pos.getX(i) - a[0], pos.getY(i) - a[1], pos.getZ(i) - a[2]);
+      const g = Math.max(0, 1 - d / 0.9);
+      glow[i] = g * g;
+    }
+  }
+
   displayGeometry.setAttribute('paint', new BufferAttribute(paint, 1));
+  displayGeometry.setAttribute('orn', new BufferAttribute(orn, 3));
+  displayGeometry.setAttribute('glow', new BufferAttribute(glow, 1));
   return displayGeometry;
 }
