@@ -10,10 +10,12 @@ import {
   plasterMaterial,
   toDisplayGeometry,
   vaultToGeometry,
+  withPaintAttribute,
 } from '@muqarnas/render';
 import {
   RisingVaultRig,
   ScrollTrigger,
+  bindCutVeil,
   bindScrubbedScene,
   createScene1,
   createScene2,
@@ -44,6 +46,9 @@ const say = (t: string) => {
   document.querySelector('#load-status')!.textContent = t;
 };
 const el = (sel: string) => document.querySelector<HTMLElement>(sel)!;
+const rule = (frac: number) => {
+  el('#load-rule i').style.width = `${Math.round(100 * Math.min(1, Math.max(0, frac)))}%`;
+};
 
 const PLATE_SYMMETRIES = [0, 2, 4, 6].flatMap((k) => [
   Iso.rotation(k),
@@ -59,6 +64,7 @@ async function buildReading(
   plan: ReturnType<typeof takhtPlateFull>,
   solution: TierSolution,
   label: string,
+  ruleBase: number,
 ) {
   say(`${label}: raising the vault…`);
   await new Promise((r) => setTimeout(r, 30));
@@ -71,10 +77,14 @@ async function buildReading(
   await bakeVertexAO(welded, {
     rays: 40,
     maxDistance: 7,
-    onProgress: (done, total) => say(`${label}: baking the light ${Math.round((100 * done) / total)}%`),
+    onProgress: (done, total) => {
+      say(`${label}: baking the light`);
+      rule(ruleBase + (0.46 * done) / total);
+    },
   });
   const display = toDisplayGeometry(welded);
   const rig = new RisingVaultRig(display, vault.tris);
+  withPaintAttribute(display, vault.tris);
   return { display, rig };
 }
 
@@ -95,10 +105,12 @@ async function main() {
     report.solutions.find((s) => s !== readingA) ??
     readingA;
 
-  const a = await buildReading(plan, readingA, 'first reading');
-  const b = await buildReading(plan, readingB, 'second reading');
+  rule(0.05);
+  const a = await buildReading(plan, readingA, 'first reading', 0.05);
+  const b = await buildReading(plan, readingB, 'second reading', 0.51);
 
   say('opening the stage…');
+  rule(1);
   const stage = await createVaultStage(el('#stage'));
   stage.controls.enabled = false;
   const material = plasterMaterial();
@@ -274,6 +286,11 @@ async function main() {
     show(worlds.nine);
     scene9(p);
   });
+
+  // a breath of black across each hard chapter cut
+  for (const runway of document.querySelectorAll<HTMLElement>('.runway.cut')) {
+    bindCutVeil(runway, el('#veil'));
+  }
 
   // the page opens on scene 1's first frame regardless of bind order
   show(worlds.one);

@@ -23,6 +23,11 @@ import { Color } from 'three';
  * Forbidden, permanently: emissive anything, metalness, bloom, a sky-down
  * key. Occlusion is baked per vertex (measured against depth; screen-space
  * AO rejected) and enters through the plaster material, not the lights.
+ *
+ * v2 (2026-08-23, user direction): the states warmed for the painted
+ * vault — hotter key, honeyed ground bounce, skies a touch cooler so the
+ * warmth and the glaze both carry. The instruments, the three states, and
+ * everything forbidden are unchanged.
  */
 
 export interface LightingState {
@@ -44,22 +49,22 @@ export const LIGHTING: Record<'rake' | 'court' | 'ember', LightingState> = {
   rake: {
     name: 'rake',
     exposure: 1.15,
-    hemisphere: { sky: 0x1e222c, ground: 0xc4a87e, intensity: 0.55 },
-    sun: { color: 0xffd9a0, intensity: 3.0, azimuthDeg: 35, elevationDeg: -15 },
+    hemisphere: { sky: 0x1b2130, ground: 0xcfa267, intensity: 0.55 },
+    sun: { color: 0xffc37e, intensity: 3.2, azimuthDeg: 35, elevationDeg: -15 },
     fill: { color: 0x7f93ad, intensity: 0.15 },
   },
   court: {
     name: 'court',
     exposure: 1.05,
-    hemisphere: { sky: 0x353b47, ground: 0xd6c2a0, intensity: 1.45 },
-    sun: { color: 0xfff1d8, intensity: 0.85, azimuthDeg: 20, elevationDeg: -8 },
+    hemisphere: { sky: 0x333c4e, ground: 0xdec09a, intensity: 1.45 },
+    sun: { color: 0xffe9c2, intensity: 0.9, azimuthDeg: 20, elevationDeg: -8 },
     fill: { color: 0x8fa3bd, intensity: 0.3 },
   },
   ember: {
     name: 'ember',
     exposure: 1.0,
-    hemisphere: { sky: 0x232733, ground: 0x9a7a5c, intensity: 0.4 },
-    sun: { color: 0xff8e52, intensity: 2.4, azimuthDeg: 62, elevationDeg: -18 },
+    hemisphere: { sky: 0x222839, ground: 0xa67a52, intensity: 0.4 },
+    sun: { color: 0xff7f42, intensity: 2.5, azimuthDeg: 62, elevationDeg: -18 },
     fill: { color: 0x5d6d85, intensity: 0.12 },
   },
 };

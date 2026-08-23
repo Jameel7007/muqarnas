@@ -68,3 +68,21 @@ as a default camera (the default stance is beneath, looking up).
   insufficient — it must not change the states' character.
 - Crown treatment (the crown element does not exist yet).
 - Per-scene exposure ramps ride on top of, never inside, the states.
+
+---
+
+## v2 — the painted vault (2026-08-23)
+
+At the user's direction the piece gained its colour. Two changes, both
+documented here so the lock stays honest:
+
+1. **The states warmed.** Hotter key, honeyed ground bounce, skies a
+   touch cooler so the warmth carries by contrast. Same three states,
+   same instruments, same negative elevation, same list of forbidden
+   things.
+2. **The glaze.** Takht-i Sulaymān's cells wore fired colour. The curved
+   canopy (the lift's `roof` triangles) now carries a turquoise wash
+   that sinks to cobalt-teal in its cavities and sits glossier than the
+   plaster around it, so the low key answers off the bowls with sheen.
+   It is colour and roughness only — still a dielectric, no metalness,
+   no emissive. Facets, bands, and walls stay bare plaster.

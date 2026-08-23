@@ -23,9 +23,11 @@ export function vaultToGeometry(vault: CurvedVault): BufferGeometry {
     flipped[t + 2] = vault.mesh.triangles[t + 1]!;
   }
   g.setIndex(flipped);
-  // ao defaults to fully open so materials work before any bake
+  // ao defaults to fully open, paint to bare plaster, so materials work
+  // before any bake or glaze pass
   const ao = new Float32Array(vault.mesh.positions.length / 3).fill(1);
   g.setAttribute('ao', new BufferAttribute(ao, 1));
+  g.setAttribute('paint', new BufferAttribute(new Float32Array(vault.mesh.positions.length / 3), 1));
   g.computeVertexNormals();
   g.computeBoundingSphere();
   return g;
@@ -47,11 +49,40 @@ export function makeVaultMesh(geometry: BufferGeometry, material: Material): Mes
   return mesh;
 }
 
-/** Give any geometry the fully-open `ao` attribute the plaster expects. */
+/** Give any geometry the `ao`/`paint` attributes the plaster expects. */
 export function withAoAttribute(geometry: BufferGeometry): BufferGeometry {
+  const count = geometry.getAttribute('position').count;
   if (!geometry.getAttribute('ao')) {
-    const count = geometry.getAttribute('position').count;
     geometry.setAttribute('ao', new BufferAttribute(new Float32Array(count).fill(1), 1));
   }
+  if (!geometry.getAttribute('paint')) {
+    geometry.setAttribute('paint', new BufferAttribute(new Float32Array(count), 1));
+  }
   return geometry;
+}
+
+/**
+ * The glaze map: Takht-i Sulaymān's cells wore fired colour on their curved
+ * canopy. Mark every roof corner of the display geometry (non-indexed,
+ * three corners per lifted triangle, in the lift's order — the same
+ * convention the rig depends on) so the plaster can carry its wash.
+ */
+export function withPaintAttribute(
+  displayGeometry: BufferGeometry,
+  tris: readonly { role: 'facet' | 'roof' | 'wall' }[],
+): BufferGeometry {
+  const count = displayGeometry.getAttribute('position').count;
+  if (count !== tris.length * 3) {
+    throw new Error(`paint: display geometry (${count} corners) does not match ${tris.length} triangles`);
+  }
+  const paint = new Float32Array(count);
+  for (let t = 0; t < tris.length; t++) {
+    if (tris[t]!.role === 'roof') {
+      paint[t * 3] = 1;
+      paint[t * 3 + 1] = 1;
+      paint[t * 3 + 2] = 1;
+    }
+  }
+  displayGeometry.setAttribute('paint', new BufferAttribute(paint, 1));
+  return displayGeometry;
 }
