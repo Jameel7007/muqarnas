@@ -5,7 +5,6 @@ import {
   attribute,
   color,
   float,
-  fract,
   max,
   mix,
   mx_noise_float,
@@ -49,8 +48,8 @@ export interface PlasterOptions {
   readonly ochre?: number;
   /** how much of the facet field the stencil claims, 0..1 */
   readonly ornamentStrength?: number;
-  /** period of the star-and-cross grid, in modules */
-  readonly ornamentPeriod?: number;
+  /** size of the fitted medallion relative to its facet, ~1 */
+  readonly ornamentScale?: number;
   /** gilt at each bowl's apex — albedo only, never emissive */
   readonly gilt?: number;
   readonly giltStrength?: number;
@@ -78,20 +77,21 @@ export function plasterMaterial(opts: PlasterOptions = {}): MeshStandardNodeMate
   const tone = broad.mul(0.045).add(fine.mul(0.03)).add(grain.mul(0.025)).add(1);
   const plasterBare = mix(color(opts.cavity ?? 0x5d4c3a), color(opts.base ?? 0xe7dbc2), cavity);
 
-  // the painted stencil: the star-and-cross (khatam) on the facet fields —
-  // an eight-pointed star is the union of a square and its 45° turn, the
-  // same two seeds the whole plan is built from. orn.xy are facet-local
-  // coordinates baked from the lift; the stencil is soft ochre over buff.
+  // the painted medallion: one whole eight-pointed star fitted to each
+  // facet field — the union of a square and its 45° turn, the same two
+  // seeds the whole plan is built from, composed to the panel the way a
+  // painter would, never cropped by its edge. orn.xy are the field's own
+  // centred coordinates, baked from the lift.
   const orn = attribute('orn', 'vec3');
-  const P = float(opts.ornamentPeriod ?? 0.72);
-  const cx = fract(orn.x.div(P)).sub(0.5).mul(P);
-  const cy = fract(orn.y.div(P)).sub(0.5).mul(P);
-  const e = float(0.012);
+  const K = float(opts.ornamentScale ?? 1);
+  const cx = orn.x;
+  const cy = orn.y;
+  const e = float(0.025);
   const sq = max(abs(cx), abs(cy));
   const di = abs(cx).add(abs(cy));
   const star = max(
-    smoothstep(P.mul(0.3).add(e), P.mul(0.3).sub(e), sq),
-    smoothstep(P.mul(0.42).add(e), P.mul(0.42).sub(e), di),
+    smoothstep(K.mul(0.4).add(e), K.mul(0.4).sub(e), sq),
+    smoothstep(K.mul(0.56).add(e), K.mul(0.56).sub(e), di),
   );
   const stencil = star
     .mul(orn.z)

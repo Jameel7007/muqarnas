@@ -98,8 +98,21 @@ export function withPaintAttribute(
   const orn = new Float32Array(count * 3);
   const glow = new Float32Array(count);
 
-  // pass one: hues, facet frames, and each cell's apex (its roof's peak)
+  // pass one: hues, facet frames, and each cell's apex (its roof's peak).
+  // Facet corners are grouped by their plane (cell + normal + offset), so
+  // a facet split by the canonical vertical subdivision still reads as ONE
+  // field — and the ornament can be fitted to it, not cropped by it.
   const apex = new Map<number, [number, number, number]>();
+  interface FacetField {
+    corners: number[];
+    u: number[];
+    v: number[];
+    uMin: number;
+    uMax: number;
+    vMin: number;
+    vMax: number;
+  }
+  const fields = new Map<string, FacetField>();
   for (let t = 0; t < tris.length; t++) {
     const role = tris[t]!.role;
     const cell = tris[t]!.cell ?? 0;
@@ -117,7 +130,7 @@ export function withPaintAttribute(
         const i = t * 3 + c;
         // horizontal tangent of the facet plane: up × normal — with a
         // canonical sign, or back-to-back facet pairs (whose normals
-        // oppose) would mirror the stencil mid-figure and shear it
+        // oppose) would mirror the stencil and shear it
         const nx = nrm.getX(i);
         const ny = nrm.getY(i);
         const len = Math.hypot(nx, ny) || 1;
@@ -127,10 +140,38 @@ export function withPaintAttribute(
           tx = -tx;
           ty = -ty;
         }
-        orn[i * 3] = pos.getX(i) * tx + pos.getY(i) * ty;
-        orn[i * 3 + 1] = pos.getZ(i);
-        orn[i * 3 + 2] = 1;
+        const u = pos.getX(i) * tx + pos.getY(i) * ty;
+        const v = pos.getZ(i);
+        const d = pos.getX(i) * (nx / len) + pos.getY(i) * (ny / len);
+        const key = `${cell}|${Math.round((nx / len) * 8)},${Math.round((ny / len) * 8)}|${Math.round(d * 32)}`;
+        let f = fields.get(key);
+        if (!f) {
+          f = { corners: [], u: [], v: [], uMin: Infinity, uMax: -Infinity, vMin: Infinity, vMax: -Infinity };
+          fields.set(key, f);
+        }
+        f.corners.push(i);
+        f.u.push(u);
+        f.v.push(v);
+        f.uMin = Math.min(f.uMin, u);
+        f.uMax = Math.max(f.uMax, u);
+        f.vMin = Math.min(f.vMin, v);
+        f.vMax = Math.max(f.vMax, v);
       }
+    }
+  }
+
+  // fit the frame: each field's coordinates centred on it and measured in
+  // its own half-width, so one whole figure sits in every field with
+  // margin — painting composed to the panel, never cropped by it
+  for (const f of fields.values()) {
+    const uc = (f.uMin + f.uMax) / 2;
+    const vc = (f.vMin + f.vMax) / 2;
+    const hw = Math.max((f.uMax - f.uMin) / 2, 1e-3);
+    for (let k = 0; k < f.corners.length; k++) {
+      const i = f.corners[k]!;
+      orn[i * 3] = (f.u[k]! - uc) / hw;
+      orn[i * 3 + 1] = (f.v[k]! - vc) / hw;
+      orn[i * 3 + 2] = 1;
     }
   }
 

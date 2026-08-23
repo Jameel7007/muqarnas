@@ -115,18 +115,25 @@ describe('the paint map (the painted vault)', () => {
     }
   });
 
-  it('stencils exactly the facets, with sane local frames', () => {
+  it('stencils exactly the facets, each field centred in its own frame', () => {
+    let uMin = Infinity;
+    let uMax = -Infinity;
     for (let t = 0; t < vault.tris.length; t++) {
       const isFacet = vault.tris[t]!.role === 'facet';
       for (let c = 0; c < 3; c++) {
         expect(orn.getZ(t * 3 + c)).toBe(isFacet ? 1 : 0);
         if (isFacet) {
-          // v is height; a facet's own span stays within the cell's two modules
-          expect(orn.getY(t * 3 + c)).toBeGreaterThanOrEqual(-1e-9);
-          expect(orn.getY(t * 3 + c)).toBeLessThanOrEqual(2 + 1e-9);
+          const u = orn.getX(t * 3 + c);
+          // fitted coordinates: the field's own width maps to exactly ±1
+          expect(Math.abs(u)).toBeLessThanOrEqual(1 + 1e-6);
+          expect(Number.isFinite(orn.getY(t * 3 + c))).toBe(true);
+          uMin = Math.min(uMin, u);
+          uMax = Math.max(uMax, u);
         }
       }
     }
+    expect(uMin).toBeCloseTo(-1, 6);
+    expect(uMax).toBeCloseTo(1, 6);
   });
 
   it('gilds each bowl brightest at its apex, fading with distance', () => {
