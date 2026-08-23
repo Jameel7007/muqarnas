@@ -46,3 +46,12 @@ export function makeVaultMesh(geometry: BufferGeometry, material: Material): Mes
   mesh.receiveShadow = true;
   return mesh;
 }
+
+/** Give any geometry the fully-open `ao` attribute the plaster expects. */
+export function withAoAttribute(geometry: BufferGeometry): BufferGeometry {
+  if (!geometry.getAttribute('ao')) {
+    const count = geometry.getAttribute('position').count;
+    geometry.setAttribute('ao', new BufferAttribute(new Float32Array(count).fill(1), 1));
+  }
+  return geometry;
+}

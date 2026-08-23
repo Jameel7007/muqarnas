@@ -1,6 +1,7 @@
 import './style.css';
 import Lenis from 'lenis';
-import { Iso, takhtPlateFull, type Pt } from '@muqarnas/plan';
+import type { Object3D } from 'three';
+import { Iso, PLATE_FIELD_SPAN, takhtPlateFull, type Pt } from '@muqarnas/plan';
 import { enumerateAssignments, liftVault, type TierSolution } from '@muqarnas/lift';
 import {
   bakeVertexAO,
@@ -14,16 +15,19 @@ import {
   RisingVaultRig,
   ScrollTrigger,
   bindScrubbedScene,
+  createScene1,
   createScene5,
   createScene7,
   gsap,
   makePlanLines,
+  makeScene1Objects,
 } from '@muqarnas/scenes';
 
 /**
- * The scroll piece: scene 5 (the lift) and scene 7 (the same plan, twice).
- * Reading-agnostic throughout — A defaults to the regular-centre reading,
- * B to Harb's, with graceful fallbacks.
+ * The scroll piece: scene 1 (the square and the circle), scene 5 (the
+ * lift), scene 7 (the same plan, twice). Reading-agnostic throughout — A
+ * defaults to the regular-centre reading, B to Harb's, with graceful
+ * fallbacks. One fixed stage; each scene's track shows only its world.
  */
 
 const say = (t: string) => {
@@ -96,6 +100,41 @@ async function main() {
   const planLines = makePlanLines(plan);
   stage.scene.add(planLines);
 
+  const s1 = makeScene1Objects(material, { half: PLATE_FIELD_SPAN.toNumber() });
+  stage.scene.add(s1.group);
+
+  // each track shows only its scene's world — objects and captions — before
+  // the scene runs, so the scenes' own toggles (mesh swaps, ink fades,
+  // caption spans) still win within it. Captions must be swept because a
+  // track past its end stops updating and would hold its last caption
+  // forever.
+  const caps = (...sels: string[]) => sels.map(el);
+  const worlds = {
+    one: { objects: [s1.group] as Object3D[], caps: caps('#cap-1a', '#cap-1b', '#cap-1c') },
+    five: { objects: [meshA, planLines] as Object3D[], caps: caps('#cap-a', '#cap-b') },
+    seven: {
+      objects: [meshA, meshB, planLines] as Object3D[],
+      caps: caps('#cap-7a', '#cap-7b', '#cap-7c'),
+    },
+  };
+  const everything = [s1.group, meshA, meshB, planLines];
+  const allCaps = Object.values(worlds).flatMap((w) => w.caps);
+  const show = (world: { objects: Object3D[]; caps: HTMLElement[] }) => {
+    for (const o of everything) o.visible = world.objects.includes(o);
+    for (const c of allCaps) if (!world.caps.includes(c)) c.style.opacity = '0';
+  };
+
+  const scene1 = createScene1(s1, stage, {
+    captionA: el('#cap-1a'),
+    captionB: el('#cap-1b'),
+    captionC: el('#cap-1c'),
+  });
+  bindScrubbedScene(el('#scene1-track'), (p) => {
+    show(worlds.one);
+    scene1(p);
+    el('#hint').style.opacity = p > 0.02 ? '0' : '1';
+  });
+
   const scene5 = createScene5(
     a.rig,
     stage,
@@ -103,8 +142,8 @@ async function main() {
     { planLines },
   );
   bindScrubbedScene(el('#scene5-track'), (p) => {
+    show(worlds.five);
     scene5(p);
-    el('#hint').style.opacity = p > 0.02 ? '0' : '1';
   });
 
   const scene7 = createScene7(
@@ -112,7 +151,14 @@ async function main() {
     stage,
     { captionA: el('#cap-7a'), captionB: el('#cap-7b'), captionC: el('#cap-7c') },
   );
-  bindScrubbedScene(el('#scene7-track'), scene7);
+  bindScrubbedScene(el('#scene7-track'), (p) => {
+    show(worlds.seven);
+    scene7(p);
+  });
+
+  // the page opens on scene 1's first frame regardless of bind order
+  show(worlds.one);
+  scene1(0);
 
   document.querySelector('#loader')!.classList.add('done');
 }
