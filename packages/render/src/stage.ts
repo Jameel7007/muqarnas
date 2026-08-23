@@ -117,6 +117,11 @@ export async function createVaultStage(container: HTMLElement): Promise<VaultSta
   };
   setView('beneath');
 
+  // scenes are framed for a wide stage: on narrower windows, widen the
+  // vertical fov so the HORIZONTAL field stays what the framing assumed —
+  // compositions shrink instead of falling off the sides
+  const BASE_FOV = 44;
+  const BASE_ASPECT = 16 / 9;
   const resize = () => {
     const w = container.clientWidth;
     const h = container.clientHeight;
@@ -125,6 +130,14 @@ export async function createVaultStage(container: HTMLElement): Promise<VaultSta
     renderer.domElement.style.width = '100%';
     renderer.domElement.style.height = '100%';
     camera.aspect = w / h;
+    if (camera.aspect >= BASE_ASPECT) {
+      camera.fov = BASE_FOV;
+    } else {
+      const wide =
+        (2 * Math.atan(Math.tan((BASE_FOV * Math.PI) / 360) * (BASE_ASPECT / camera.aspect)) * 180) /
+        Math.PI;
+      camera.fov = Math.min(wide, 78);
+    }
     camera.updateProjectionMatrix();
   };
   const observer = new ResizeObserver(resize);

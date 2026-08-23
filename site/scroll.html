@@ -68,13 +68,21 @@
         position: fixed;
         left: 50%;
         transform: translateX(-50%);
-        bottom: 8.5vh;
+        bottom: 7.5vh;
         max-width: 37rem;
-        padding: 0 1.4rem;
+        padding: 1.5rem 2.2rem 1.7rem;
         text-align: center;
         opacity: 0;
         z-index: 2;
         pointer-events: none;
+        /* a soft pillow of the page's own dark, so words never wrestle
+           the plaster behind them */
+        background: radial-gradient(
+          ellipse closest-side,
+          rgba(13, 12, 9, 0.78) 0%,
+          rgba(13, 12, 9, 0.5) 55%,
+          rgba(13, 12, 9, 0) 100%
+        );
       }
       .scene-caption .num {
         display: block;

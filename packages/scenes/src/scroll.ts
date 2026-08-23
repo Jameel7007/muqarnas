@@ -18,7 +18,9 @@ export function bindScrubbedScene(
   const st = ScrollTrigger.create({
     trigger: track,
     start: 'top top',
-    end: 'bottom bottom',
+    // scrub to the track's very exit, so between scenes only the runway is
+    // dead time — a held frame of 160vh was most of what read as "choppy"
+    end: 'bottom top',
     scrub: 0.5,
     onUpdate: (self) => {
       latest = self.progress;
@@ -46,20 +48,32 @@ export function bindScrubbedScene(
 }
 
 /**
- * A breath of black across a hard chapter cut: the veil rises to near-full
- * at the runway's middle and is gone at both ends, so neither scene ever
- * pops — it emerges. Bind one per runway that separates unlike spaces;
- * continuous seams need none.
+ * A breath of black across a hard chapter cut. The critical property is
+ * ALIGNMENT: the world switch happens the instant the next scene's track
+ * begins, so the veil must be at full black exactly there — it rises
+ * through the outgoing scene's last stretch, holds across the runway and
+ * the switch, and falls only inside the incoming scene. (The first cut of
+ * this veil peaked mid-runway and had already fallen by the switch: the
+ * old frame faded back in and the new one popped — the "disappears, comes
+ * back, then jumps" the design review caught.)
  */
 export function bindCutVeil(runway: HTMLElement, veil: HTMLElement): ScrollTrigger {
+  const zone = () => window.innerHeight * 0.14;
   return ScrollTrigger.create({
     trigger: runway,
-    start: 'top bottom',
-    end: 'bottom top',
-    scrub: 0.25,
+    start: () => runway.offsetTop - zone(),
+    end: () => runway.offsetTop + runway.offsetHeight + zone(),
+    scrub: 0.2,
     onUpdate: (self) => {
-      const tri = 1 - Math.abs(2 * self.progress - 1);
-      veil.style.opacity = String(Math.min(1, Math.pow(tri, 1.4) * 1.15));
+      const s = self.scroll();
+      const z = zone();
+      const rise = Math.min(1, Math.max(0, (s - (runway.offsetTop - z)) / z));
+      const fall = Math.min(
+        1,
+        Math.max(0, (runway.offsetTop + runway.offsetHeight + z - s) / z),
+      );
+      const o = Math.min(rise, fall);
+      veil.style.opacity = String(o * o * (3 - 2 * o));
     },
     onLeave: () => {
       veil.style.opacity = '0';
