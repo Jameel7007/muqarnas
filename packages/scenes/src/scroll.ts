@@ -48,38 +48,63 @@ export function bindScrubbedScene(
 }
 
 /**
- * A breath of black across a hard chapter cut. The critical property is
- * ALIGNMENT: the world switch happens the instant the next scene's track
- * begins, so the veil must be at full black exactly there — it rises
- * through the outgoing scene's last stretch, holds across the runway and
- * the switch, and falls only inside the incoming scene. (The first cut of
- * this veil peaked mid-runway and had already fallen by the switch: the
- * old frame faded back in and the new one popped — the "disappears, comes
- * back, then jumps" the design review caught.)
+ * A cross-dissolve across a hard chapter cut — no black anywhere. The
+ * moment a scene's scrub freezes at the runway's edge, its frame is
+ * snapshotted into the overlay (pixel-identical to the live canvas, so
+ * the takeover is invisible); the world switch happens beneath the held
+ * picture; and on the far side the picture dissolves into the incoming
+ * scene, already live. Symmetric in both scroll directions: the snapshot
+ * is taken entering the dead zone from either side, and the fade always
+ * happens on the side being exited.
  */
-export function bindCutVeil(runway: HTMLElement, veil: HTMLElement): ScrollTrigger {
-  const zone = () => window.innerHeight * 0.14;
+export function bindCutDissolve(
+  runway: HTMLElement,
+  overlay: HTMLCanvasElement,
+  capture: (target: HTMLCanvasElement, onDone: () => void) => void,
+): ScrollTrigger {
+  const fade = () => window.innerHeight * 0.3;
+  let shown = false;
+  let captured = false;
+
   return ScrollTrigger.create({
     trigger: runway,
-    start: () => runway.offsetTop - zone(),
-    end: () => runway.offsetTop + runway.offsetHeight + zone(),
-    scrub: 0.2,
+    start: () => runway.offsetTop - fade(),
+    end: () => runway.offsetTop + runway.offsetHeight + fade(),
     onUpdate: (self) => {
       const s = self.scroll();
-      const z = zone();
-      const rise = Math.min(1, Math.max(0, (s - (runway.offsetTop - z)) / z));
-      const fall = Math.min(
-        1,
-        Math.max(0, (runway.offsetTop + runway.offsetHeight + z - s) / z),
-      );
-      const o = Math.min(rise, fall);
-      veil.style.opacity = String(o * o * (3 - 2 * o));
+      const top = runway.offsetTop;
+      const bottom = top + runway.offsetHeight;
+      if (s >= top && s <= bottom) {
+        // the dead zone: both scenes frozen; hold the picture. The copy
+        // lands a frame later (a WebGPU canvas is only readable in the
+        // same task as its render), and the overlay waits for it —
+        // showing pixels identical to the frame beneath, so the takeover
+        // is invisible.
+        if (!shown) {
+          shown = true;
+          captured = false;
+          capture(overlay, () => {
+            captured = true;
+            if (shown) overlay.style.opacity = '1';
+          });
+        } else if (captured) {
+          overlay.style.opacity = '1';
+        }
+      } else if (shown && captured) {
+        // exiting: the held picture dissolves into the live scene
+        const t = s > bottom ? (s - bottom) / fade() : (top - s) / fade();
+        const o = Math.max(0, 1 - t);
+        overlay.style.opacity = String(o * o * (3 - 2 * o));
+        if (t >= 1) shown = false;
+      }
     },
     onLeave: () => {
-      veil.style.opacity = '0';
+      overlay.style.opacity = '0';
+      shown = false;
     },
     onLeaveBack: () => {
-      veil.style.opacity = '0';
+      overlay.style.opacity = '0';
+      shown = false;
     },
   });
 }

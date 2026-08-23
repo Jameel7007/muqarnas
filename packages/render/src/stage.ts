@@ -20,6 +20,12 @@ export interface VaultStage {
   setView(preset: 'beneath' | 'profile'): void;
   /** Apply a state of the lighting language (or an interpolation of two). */
   applyLighting(state: LightingState): void;
+  /**
+   * Copy the next rendered frame into `target` (same-task with the render,
+   * which is the only moment a WebGPU canvas can be read). `onDone` fires
+   * once the pixels are in place.
+   */
+  captureFrame(target: HTMLCanvasElement, onDone?: () => void): void;
   /** 'webgpu' or 'webgl2' after init */
   readonly backend: string;
   dispose(): void;
@@ -144,9 +150,25 @@ export async function createVaultStage(container: HTMLElement): Promise<VaultSta
   observer.observe(container);
   resize();
 
+  const pendingCaptures: Array<{ target: HTMLCanvasElement; onDone?: () => void }> = [];
   renderer.setAnimationLoop(() => {
     controls.update();
     renderer.render(scene, camera);
+    while (pendingCaptures.length) {
+      const { target, onDone } = pendingCaptures.shift()!;
+      try {
+        target.width = renderer.domElement.width;
+        target.height = renderer.domElement.height;
+        target.getContext('2d')?.drawImage(renderer.domElement, 0, 0);
+      } catch {
+        const ctx = target.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = '#14120e';
+          ctx.fillRect(0, 0, target.width, target.height);
+        }
+      }
+      onDone?.();
+    }
   });
 
   return {
@@ -170,6 +192,9 @@ export async function createVaultStage(container: HTMLElement): Promise<VaultSta
     },
     setView,
     applyLighting,
+    captureFrame(target, onDone) {
+      pendingCaptures.push({ target, onDone });
+    },
     dispose() {
       observer.disconnect();
       renderer.setAnimationLoop(null);

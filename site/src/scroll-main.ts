@@ -15,7 +15,7 @@ import {
 import {
   RisingVaultRig,
   ScrollTrigger,
-  bindCutVeil,
+  bindCutDissolve,
   bindScrubbedScene,
   createScene1,
   createScene2,
@@ -287,9 +287,11 @@ async function main() {
     scene9(p);
   });
 
-  // a breath of black across each hard chapter cut
+  // a cross-dissolve across each hard chapter cut: the frozen outgoing
+  // frame melts into the incoming scene, no black anywhere
+  const dissolve = el('#dissolve') as HTMLCanvasElement;
   for (const runway of document.querySelectorAll<HTMLElement>('.runway.cut')) {
-    bindCutVeil(runway, el('#veil'));
+    bindCutDissolve(runway, dissolve, (target, onDone) => stage.captureFrame(target, onDone));
   }
 
   // the page opens on scene 1's first frame regardless of bind order

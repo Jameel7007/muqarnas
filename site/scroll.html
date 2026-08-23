@@ -62,7 +62,7 @@
         height: 620vh;
       }
       .runway {
-        height: 60vh;
+        height: 40vh;
       }
       .scene-caption {
         position: fixed;
@@ -106,10 +106,11 @@
           0 1px 14px rgba(10, 9, 6, 0.95),
           0 0 3px rgba(10, 9, 6, 0.85);
       }
-      #veil {
+      #dissolve {
         position: fixed;
         inset: 0;
-        background: #0d0c09;
+        width: 100%;
+        height: 100%;
         opacity: 0;
         z-index: 3;
         pointer-events: none;
@@ -382,7 +383,7 @@
     <div class="track" id="scene3-track"></div>
     <div class="track runway cut"></div>
     <div class="track" id="scene4-track"></div>
-    <div class="track runway"></div>
+    <div class="track runway cut"></div>
     <div class="track" id="scene5-track"></div>
     <div class="track runway"></div>
     <div class="track" id="scene6-track"></div>
@@ -394,7 +395,7 @@
     <div class="track" id="scene9-track"></div>
     <div class="track runway"></div>
 
-    <div id="veil"></div>
+    <canvas id="dissolve"></canvas>
   </body>
   <script type="module" src="/src/scroll-main.ts"></script>
 </html>

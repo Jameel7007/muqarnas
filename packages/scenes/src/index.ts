@@ -33,4 +33,4 @@ export {
 export { createScene5, type Scene5Dom, type Scene5Extras } from './scene5.js';
 export { createScene7, type Scene7Dom, type Scene7Parts } from './scene7.js';
 export { makePlanLines } from './planLines.js';
-export { bindCutVeil, bindScrubbedScene, gsap, ScrollTrigger } from './scroll.js';
+export { bindCutDissolve, bindScrubbedScene, gsap, ScrollTrigger } from './scroll.js';
