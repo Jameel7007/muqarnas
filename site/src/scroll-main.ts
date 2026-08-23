@@ -17,12 +17,14 @@ import {
   bindScrubbedScene,
   createScene1,
   createScene2,
+  createScene3,
   createScene5,
   createScene7,
   gsap,
   makePlanLines,
   makeScene1Objects,
   makeScene2Objects,
+  makeScene3Objects,
 } from '@muqarnas/scenes';
 
 /**
@@ -108,6 +110,17 @@ async function main() {
   const s2 = makeScene2Objects();
   stage.scene.add(s2.group);
 
+  const s3 = makeScene3Objects(plan);
+  stage.scene.add(s3.group);
+
+  // the census, from the digitized plate itself
+  const tally = (kind: string) => plan.placed.filter((q) => q.def.kind === kind).length;
+  el('#cap-3d-total').textContent = String(plan.placed.length);
+  el('#cap-3d-sq').textContent = String(tally('square'));
+  el('#cap-3d-rh').textContent = String(tally('rhombus'));
+  el('#cap-3d-hr').textContent = String(tally('half-rhombus'));
+  el('#cap-3d-jug').textContent = String(tally('jug'));
+
   // each track shows only its scene's world — objects and captions — before
   // the scene runs, so the scenes' own toggles (mesh swaps, ink fades,
   // caption spans) still win within it. Captions must be swept because a
@@ -120,13 +133,17 @@ async function main() {
       objects: [s2.group] as Object3D[],
       caps: caps('#cap-2a', '#cap-2b', '#cap-2c', '#cap-2d'),
     },
+    three: {
+      objects: [s3.group] as Object3D[],
+      caps: caps('#cap-3a', '#cap-3b', '#cap-3c', '#cap-3d'),
+    },
     five: { objects: [meshA, planLines] as Object3D[], caps: caps('#cap-a', '#cap-b') },
     seven: {
       objects: [meshA, meshB, planLines] as Object3D[],
       caps: caps('#cap-7a', '#cap-7b', '#cap-7c'),
     },
   };
-  const everything = [s1.group, s2.group, meshA, meshB, planLines];
+  const everything = [s1.group, s2.group, s3.group, meshA, meshB, planLines];
   const allCaps = Object.values(worlds).flatMap((w) => w.caps);
   const show = (world: { objects: Object3D[]; caps: HTMLElement[] }) => {
     for (const o of everything) o.visible = world.objects.includes(o);
@@ -154,6 +171,17 @@ async function main() {
   bindScrubbedScene(el('#scene2-track'), (p) => {
     show(worlds.two);
     scene2(p);
+  });
+
+  const scene3 = createScene3(s3, stage, {
+    captionA: el('#cap-3a'),
+    captionB: el('#cap-3b'),
+    captionC: el('#cap-3c'),
+    captionD: el('#cap-3d'),
+  });
+  bindScrubbedScene(el('#scene3-track'), (p) => {
+    show(worlds.three);
+    scene3(p);
   });
 
   const scene5 = createScene5(
