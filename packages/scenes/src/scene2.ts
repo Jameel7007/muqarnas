@@ -184,13 +184,15 @@ interface CamKey {
   readonly target: [number, number, number];
 }
 
+// targets sit low on the drawing so the figure rides high in frame and the
+// caption band along the bottom stays clear at any window aspect
 const CAMERA_PATH: CamKey[] = [
-  { at: 0.0, pos: [0.5, -5.4, 1.02], target: [0.5, 0, 1.02] }, // facing the wall of drawing
-  { at: 0.56, pos: [0.5, -5.4, 1.02], target: [0.5, 0, 1.02] }, // held through the recipe
-  { at: 0.64, pos: [0.45, -4.5, 1.05], target: [0.45, 0, 1.05] }, // leaning in to measure
-  { at: 0.78, pos: [0.45, -4.5, 1.05], target: [0.45, 0, 1.05] }, // held on the count
-  { at: 0.94, pos: [1.0, -6.2, 1.02], target: [1.0, 0, 1.02] }, // back, centred on the pair
-  { at: 1.0, pos: [1.0, -6.2, 1.02], target: [1.0, 0, 1.02] },
+  { at: 0.0, pos: [0.5, -5.4, 0.9], target: [0.5, 0, 0.9] }, // facing the wall of drawing
+  { at: 0.56, pos: [0.5, -5.4, 0.9], target: [0.5, 0, 0.9] }, // held through the recipe
+  { at: 0.64, pos: [0.45, -5.0, 0.86], target: [0.45, 0, 0.86] }, // leaning in to measure
+  { at: 0.78, pos: [0.45, -5.0, 0.86], target: [0.45, 0, 0.86] }, // held on the count
+  { at: 0.94, pos: [1.0, -6.4, 0.92], target: [1.0, 0, 0.92] }, // back, centred on the pair
+  { at: 1.0, pos: [1.0, -6.4, 0.92], target: [1.0, 0, 0.92] },
 ];
 
 export function createScene2(objects: Scene2Objects, stage: VaultStage, dom: Scene2Dom = {}) {

@@ -351,10 +351,12 @@ interface CamKey {
 const CAMERA_PATH: CamKey[] = [
   { at: 0.0, pos: [0, -0.5, 6.6], target: [0, 0.9, 0] }, // the seeds
   { at: 0.5, pos: [0, -0.5, 6.6], target: [0, 0.9, 0] }, // held through the derivations
-  { at: 0.62, pos: [0, -3.1, 10.7], target: [0, -0.95, 0] }, // the row revealed
-  { at: 0.72, pos: [0, -2.0, 10.9], target: [0, 0.2, 0] }, // room for the words
-  { at: 0.88, pos: [0, -1.2, 9.2], target: [0, 0.8, 0] }, // settled on the corner patch
-  { at: 1.0, pos: [0, -1.2, 9.2], target: [0, 0.8, 0] },
+  { at: 0.62, pos: [0, -3.1, 11.2], target: [0, -0.72, 0] }, // the row revealed, clear of the caption band
+  // wide enough that the corner patch AND the whole specimen row hold the
+  // frame together, stacked above the caption band — no letter leaves the page
+  { at: 0.72, pos: [0, -2.8, 15.6], target: [0, -0.9, 0] },
+  { at: 0.88, pos: [0, -3.2, 16.4], target: [0, -1.05, 0] },
+  { at: 1.0, pos: [0, -3.2, 16.4], target: [0, -1.05, 0] },
 ];
 
 export function createScene3(
