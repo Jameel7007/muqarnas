@@ -98,32 +98,27 @@ export function withPaintAttribute(
   const orn = new Float32Array(count * 3);
   const glow = new Float32Array(count);
 
-  // pass one: hues, facet frames, and each cell's apex (its roof's peak).
-  // Facet triangles are grouped into panels by CONNECTIVITY — sharing a
-  // vertex (positions are bit-exact from the lattice, so no tolerance is
-  // needed) on the same FOLDED facing: opposite normals count as one,
-  // because the masonry's double walls are two coincident facets from
-  // neighbouring cells, and if each carries its own frame the depth-fight
-  // between them renders a patchwork of two different stars — the smeared
-  // figures the design review caught. One plane, one frame, both sides.
+  // pass one: hues, facet panels, and each cell's apex (its roof's peak).
+  // A PANEL is a fact the lift already knows: one cell, one facing — no
+  // mesh connectivity involved. (An earlier connectivity grouping let
+  // coplanar facets of NEIGHBOURING cells chain through shared wall-line
+  // vertices into one long band with a single centred star: shards at the
+  // ends, the design review's "still a lot of bugs".) Coincident
+  // double-wall panels — two cells' facets on the same rectangle — are
+  // unified afterwards by rect identity, so both sides carry one frame
+  // and the depth-fight stays invisible.
   const apex = new Map<number, [number, number, number]>();
-  const facetTris: number[] = [];
-  const parent: number[] = [];
-  const find = (a: number): number => {
-    let r = a;
-    while (parent[r] !== r) r = parent[r]!;
-    while (parent[a] !== r) {
-      const next = parent[a]!;
-      parent[a] = r;
-      a = next;
-    }
-    return r;
-  };
-  const union = (a: number, b: number) => {
-    parent[find(a)] = find(b);
-  };
   const cornerU = new Float32Array(count);
-  const buckets = new Map<string, number>();
+  interface FacetField {
+    corners: number[];
+    nk: string;
+    d: number;
+    uMin: number;
+    uMax: number;
+    vMin: number;
+    vMax: number;
+  }
+  const fields = new Map<string, FacetField>();
 
   for (let t = 0; t < tris.length; t++) {
     const role = tris[t]!.role;
@@ -138,14 +133,10 @@ export function withPaintAttribute(
         if (!best || z > best[2]) apex.set(cell, [pos.getX(i), pos.getY(i), z]);
       }
     } else if (role === 'facet') {
-      const local = facetTris.length;
-      facetTris.push(t);
-      parent.push(local);
       for (let c = 0; c < 3; c++) {
         const i = t * 3 + c;
-        // fold the normal to a canonical half-plane, then take the
-        // horizontal tangent from the folded normal — coincident
-        // opposite-facing facets get the SAME frame by construction
+        // fold the normal to a canonical half-plane, so both sides of a
+        // double wall derive the same tangent and the same offset
         let nx = nrm.getX(i);
         let ny = nrm.getY(i);
         const len = Math.hypot(nx, ny) || 1;
@@ -156,53 +147,49 @@ export function withPaintAttribute(
           ny = -ny;
         }
         cornerU[i] = pos.getX(i) * -ny + pos.getY(i) * nx;
-        const key = `${Math.round(nx * 8)},${Math.round(ny * 8)}|${pos.getX(i)},${pos.getY(i)},${pos.getZ(i)}`;
-        const seen = buckets.get(key);
-        if (seen === undefined) buckets.set(key, local);
-        else union(local, seen);
+        const nk = `${Math.round(nx * 8)},${Math.round(ny * 8)}`;
+        const key = `${cell}|${nk}`;
+        let f = fields.get(key);
+        if (!f) {
+          f = {
+            corners: [],
+            nk,
+            d: pos.getX(i) * nx + pos.getY(i) * ny,
+            uMin: Infinity,
+            uMax: -Infinity,
+            vMin: Infinity,
+            vMax: -Infinity,
+          };
+          fields.set(key, f);
+        }
+        f.corners.push(i);
+        f.uMin = Math.min(f.uMin, cornerU[i]!);
+        f.uMax = Math.max(f.uMax, cornerU[i]!);
+        f.vMin = Math.min(f.vMin, pos.getZ(i));
+        f.vMax = Math.max(f.vMax, pos.getZ(i));
       }
     }
   }
 
-  interface FacetField {
-    corners: number[];
-    uMin: number;
-    uMax: number;
-    vMin: number;
-    vMax: number;
-  }
-  const fields = new Map<number, FacetField>();
-  for (let local = 0; local < facetTris.length; local++) {
-    const root = find(local);
-    let f = fields.get(root);
-    if (!f) {
-      f = { corners: [], uMin: Infinity, uMax: -Infinity, vMin: Infinity, vMax: -Infinity };
-      fields.set(root, f);
-    }
-    const t = facetTris[local]!;
-    for (let c = 0; c < 3; c++) {
-      const i = t * 3 + c;
-      f.corners.push(i);
-      f.uMin = Math.min(f.uMin, cornerU[i]!);
-      f.uMax = Math.max(f.uMax, cornerU[i]!);
-      f.vMin = Math.min(f.vMin, pos.getZ(i));
-      f.vMax = Math.max(f.vMax, pos.getZ(i));
-    }
-  }
-
-  // fit the frame: each field's coordinates centred on it and measured in
-  // its SMALLER half-dimension, so one whole figure sits in every field
-  // with margin — sized by width on tall panels, by height on wide ones
-  // (the 180°-facet cells make double-width fields whose width-sized
-  // stars overflowed the panel and smeared). Painting composed to the
-  // panel, never cropped by it.
+  // unify coincident panels: same facing, same plane, same rectangle —
+  // the quantum is far coarser than float noise (distinct planes sit
+  // whole lattice steps apart), so 1e-6 rounding cannot cross a boundary
+  const q = (x: number) => Math.round(x * 1e6);
+  const canonical = new Map<string, { uc: number; vc: number; r: number }>();
   for (const f of fields.values()) {
-    const uc = (f.uMin + f.uMax) / 2;
-    const vc = (f.vMin + f.vMax) / 2;
-    const r = Math.max(Math.min((f.uMax - f.uMin) / 2, (f.vMax - f.vMin) / 2), 1e-3);
+    const key = `${f.nk}|${q(f.d)}|${q(f.uMin)},${q(f.uMax)},${q(f.vMin)},${q(f.vMax)}`;
+    let frame = canonical.get(key);
+    if (!frame) {
+      frame = {
+        uc: (f.uMin + f.uMax) / 2,
+        vc: (f.vMin + f.vMax) / 2,
+        r: Math.max(Math.min((f.uMax - f.uMin) / 2, (f.vMax - f.vMin) / 2), 1e-3),
+      };
+      canonical.set(key, frame);
+    }
     for (const i of f.corners) {
-      orn[i * 3] = (cornerU[i]! - uc) / r;
-      orn[i * 3 + 1] = (pos.getZ(i) - vc) / r;
+      orn[i * 3] = (cornerU[i]! - frame.uc) / frame.r;
+      orn[i * 3 + 1] = (pos.getZ(i) - frame.vc) / frame.r;
       orn[i * 3 + 2] = 1;
     }
   }

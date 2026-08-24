@@ -93,10 +93,7 @@ export function plasterMaterial(opts: PlasterOptions = {}): MeshStandardNodeMate
     smoothstep(K.mul(0.4).add(e), K.mul(0.4).sub(e), sq),
     smoothstep(K.mul(0.56).add(e), K.mul(0.56).sub(e), di),
   );
-  const stencil = star
-    .mul(orn.z)
-    .mul(float(opts.ornamentStrength ?? 0.62))
-    .mul(broad.mul(0.12).add(1));
+  const stencil = star.mul(orn.z).mul(float(opts.ornamentStrength ?? 0.62));
   const plasterCol = mix(plasterBare, mix(color(0x6b3020), color(opts.ochre ?? 0xb35a30), cavity), stencil);
 
   const turquoise = mix(color(opts.glazeCavity ?? 0x14565e), color(opts.glaze ?? 0x31b0a5), cavity);

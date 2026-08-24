@@ -42,13 +42,13 @@ export const DAY_START_DEG = 150;
 export const DAY_RAKE: LightingState = {
   ...LIGHTING.rake,
   exposure: LIGHTING.rake.exposure + 0.08,
-  hemisphere: { ...LIGHTING.rake.hemisphere, intensity: LIGHTING.rake.hemisphere.intensity * 0.85 },
-  sun: { ...LIGHTING.rake.sun, intensity: LIGHTING.rake.sun.intensity * 1.22 },
+  hemisphere: { ...LIGHTING.rake.hemisphere, intensity: LIGHTING.rake.hemisphere.intensity * 0.72 },
+  sun: { ...LIGHTING.rake.sun, intensity: LIGHTING.rake.sun.intensity * 1.35 },
 };
 
 /** The key's azimuth: one full turn, eased, beginning once the camera stands. */
 export function dayAzimuth(p: number): number {
-  return DAY_START_DEG + 360 * span(p, 0.1, 0.94);
+  return DAY_START_DEG + 360 * span(p, 0.08, 0.96);
 }
 
 /** The whole day is one field of one state — the lock, as a function. */
