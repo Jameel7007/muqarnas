@@ -112,11 +112,8 @@ export function withPaintAttribute(
   interface FacetField {
     corners: number[];
     nk: string;
-    d: number;
-    uMin: number;
-    uMax: number;
-    vMin: number;
-    vMax: number;
+    sumNx: number;
+    sumNy: number;
   }
   const fields = new Map<string, FacetField>();
 
@@ -136,7 +133,7 @@ export function withPaintAttribute(
       for (let c = 0; c < 3; c++) {
         const i = t * 3 + c;
         // fold the normal to a canonical half-plane, so both sides of a
-        // double wall derive the same tangent and the same offset
+        // double wall land in the same field
         let nx = nrm.getX(i);
         let ny = nrm.getY(i);
         const len = Math.hypot(nx, ny) || 1;
@@ -146,44 +143,58 @@ export function withPaintAttribute(
           nx = -nx;
           ny = -ny;
         }
-        cornerU[i] = pos.getX(i) * -ny + pos.getY(i) * nx;
         const nk = `${Math.round(nx * 8)},${Math.round(ny * 8)}`;
         const key = `${cell}|${nk}`;
         let f = fields.get(key);
         if (!f) {
-          f = {
-            corners: [],
-            nk,
-            d: pos.getX(i) * nx + pos.getY(i) * ny,
-            uMin: Infinity,
-            uMax: -Infinity,
-            vMin: Infinity,
-            vMax: -Infinity,
-          };
+          f = { corners: [], nk, sumNx: 0, sumNy: 0 };
           fields.set(key, f);
         }
         f.corners.push(i);
-        f.uMin = Math.min(f.uMin, cornerU[i]!);
-        f.uMax = Math.max(f.uMax, cornerU[i]!);
-        f.vMin = Math.min(f.vMin, pos.getZ(i));
-        f.vMax = Math.max(f.vMax, pos.getZ(i));
+        f.sumNx += nx;
+        f.sumNy += ny;
       }
     }
   }
 
-  // unify coincident panels: same facing, same plane, same rectangle —
-  // the quantum is far coarser than float noise (distinct planes sit
-  // whole lattice steps apart), so 1e-6 rounding cannot cross a boundary
+  // one frame per field, from the field's AVERAGED facing. The tangent
+  // must not come from per-corner normals: the jug's facet quad is
+  // genuinely warped (its two triangles' normals sit ~3° apart), and
+  // per-corner tangents gave each half a slightly different frame — the
+  // sheared figures that survived every earlier grouping fix. With one
+  // averaged tangent the star is a single affine figure across the whole
+  // panel, warped surface or not.
   const q = (x: number) => Math.round(x * 1e6);
   const canonical = new Map<string, { uc: number; vc: number; r: number }>();
   for (const f of fields.values()) {
-    const key = `${f.nk}|${q(f.d)}|${q(f.uMin)},${q(f.uMax)},${q(f.vMin)},${q(f.vMax)}`;
+    const nlen = Math.hypot(f.sumNx, f.sumNy) || 1;
+    const nx = f.sumNx / nlen;
+    const ny = f.sumNy / nlen;
+    let uMin = Infinity;
+    let uMax = -Infinity;
+    let vMin = Infinity;
+    let vMax = -Infinity;
+    let dSum = 0;
+    for (const i of f.corners) {
+      const u = pos.getX(i) * -ny + pos.getY(i) * nx;
+      cornerU[i] = u;
+      uMin = Math.min(uMin, u);
+      uMax = Math.max(uMax, u);
+      vMin = Math.min(vMin, pos.getZ(i));
+      vMax = Math.max(vMax, pos.getZ(i));
+      dSum += pos.getX(i) * nx + pos.getY(i) * ny;
+    }
+    // unify coincident panels: same facing, same mean plane offset, same
+    // rectangle — both sides of a double wall are built from the same
+    // lattice points, and distinct planes sit whole lattice steps apart,
+    // so 1e-6 rounding cannot cross a boundary
+    const key = `${f.nk}|${q(dSum / f.corners.length)}|${q(uMin)},${q(uMax)},${q(vMin)},${q(vMax)}`;
     let frame = canonical.get(key);
     if (!frame) {
       frame = {
-        uc: (f.uMin + f.uMax) / 2,
-        vc: (f.vMin + f.vMax) / 2,
-        r: Math.max(Math.min((f.uMax - f.uMin) / 2, (f.vMax - f.vMin) / 2), 1e-3),
+        uc: (uMin + uMax) / 2,
+        vc: (vMin + vMax) / 2,
+        r: Math.max(Math.min((uMax - uMin) / 2, (vMax - vMin) / 2), 1e-3),
       };
       canonical.set(key, frame);
     }
