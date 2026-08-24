@@ -70,8 +70,11 @@ export async function createVaultStage(container: HTMLElement): Promise<VaultSta
   sun.shadow.camera.top = 30;
   sun.shadow.camera.bottom = -30;
   sun.shadow.bias = -0.0004;
-  sun.shadow.normalBias = 0.035;
-  sun.shadow.radius = 6;
+  sun.shadow.normalBias = 0.05;
+  // wide penumbra: at glancing angles a tight shadow edge staircases at
+  // texel scale, and a stepped terminator crossing a painted figure reads
+  // as broken ornament
+  sun.shadow.radius = 10;
   scene.add(sun);
   scene.add(sun.target);
 

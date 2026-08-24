@@ -53,24 +53,24 @@ export interface LightingState {
 export const LIGHTING: Record<'rake' | 'court' | 'ember', LightingState> = {
   rake: {
     name: 'rake',
-    exposure: 1.34,
-    hemisphere: { sky: 0x1b2130, ground: 0xcfa267, intensity: 0.75 },
+    exposure: 1.44,
+    hemisphere: { sky: 0x2a3142, ground: 0xdbb47e, intensity: 0.82 },
     sun: { color: 0xffc37e, intensity: 3.6, azimuthDeg: 35, elevationDeg: -15 },
-    fill: { color: 0x7f93ad, intensity: 0.26 },
+    fill: { color: 0x8b9fb8, intensity: 0.32 },
   },
   court: {
     name: 'court',
-    exposure: 1.2,
-    hemisphere: { sky: 0x333c4e, ground: 0xdec09a, intensity: 1.6 },
+    exposure: 1.3,
+    hemisphere: { sky: 0x424d63, ground: 0xe8d0ac, intensity: 1.65 },
     sun: { color: 0xffe9c2, intensity: 1.0, azimuthDeg: 20, elevationDeg: -8 },
-    fill: { color: 0x8fa3bd, intensity: 0.36 },
+    fill: { color: 0x9bafc8, intensity: 0.4 },
   },
   ember: {
     name: 'ember',
-    exposure: 1.34,
-    hemisphere: { sky: 0x222839, ground: 0xb5854f, intensity: 0.82 },
-    sun: { color: 0xff7f42, intensity: 3.2, azimuthDeg: 62, elevationDeg: -18 },
-    fill: { color: 0x5d6d85, intensity: 0.3 },
+    exposure: 1.42,
+    hemisphere: { sky: 0x323a52, ground: 0xc49763, intensity: 0.88 },
+    sun: { color: 0xff8952, intensity: 3.2, azimuthDeg: 62, elevationDeg: -18 },
+    fill: { color: 0x6d7d95, intensity: 0.34 },
   },
 };
 

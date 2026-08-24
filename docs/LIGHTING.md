@@ -95,3 +95,13 @@ climbs with it — low blades at morning and evening, higher at noon,
 returning exactly to the rake's own elevation at both ends so the
 handoffs stay seamless. The key never rises above the horizontal:
 light still never falls on a muqarnas from the sky.
+
+## v2.3 — ivory faience (2026-08-24)
+
+The clay lightens to near-white warm ceramic at the user's direction:
+ivory plaster whose depths shade rather than sink, brighter glazes,
+lifted exposure and bounce in all three states, and a lightened sky
+term so shadow floors read as shade, not void. The shadow penumbra
+widens so terminators can never staircase across a painted figure.
+Instruments, states, negative elevation, and the forbidden list are
+unchanged.

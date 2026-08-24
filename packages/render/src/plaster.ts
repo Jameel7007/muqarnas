@@ -66,7 +66,7 @@ export function plasterMaterial(opts: PlasterOptions = {}): MeshStandardNodeMate
 
   const ao = attribute('ao', 'float');
   const paint = attribute('paint', 'float');
-  const cavity = pow(ao, float(opts.cavityStrength ?? 1.35));
+  const cavity = pow(ao, float(opts.cavityStrength ?? 1.12));
   // micro-life: three scales of noise drift the albedo a few percent and
   // the roughness a little — hand-floated plaster, not injection moulding.
   // The grain octave exists for the close-ups, where a cell's backside
@@ -75,7 +75,9 @@ export function plasterMaterial(opts: PlasterOptions = {}): MeshStandardNodeMate
   const fine = mx_noise_float(positionWorld.mul(1.3));
   const grain = mx_noise_float(positionWorld.mul(5.6));
   const tone = broad.mul(0.045).add(fine.mul(0.03)).add(grain.mul(0.025)).add(1);
-  const plasterBare = mix(color(opts.cavity ?? 0x5d4c3a), color(opts.base ?? 0xe7dbc2), cavity);
+  // ivory faience: near-white warm ceramic, its depths shading rather
+  // than sinking to clay — the ornament and the glazes carry the colour
+  const plasterBare = mix(color(opts.cavity ?? 0x94826a), color(opts.base ?? 0xf1e9d7), cavity);
 
   // the painted medallion: one whole eight-pointed star fitted to each
   // facet field — the union of a square and its 45° turn, the same two
@@ -96,8 +98,8 @@ export function plasterMaterial(opts: PlasterOptions = {}): MeshStandardNodeMate
   const stencil = star.mul(orn.z).mul(float(opts.ornamentStrength ?? 0.62));
   const plasterCol = mix(plasterBare, mix(color(0x6b3020), color(opts.ochre ?? 0xb35a30), cavity), stencil);
 
-  const turquoise = mix(color(opts.glazeCavity ?? 0x14565e), color(opts.glaze ?? 0x31b0a5), cavity);
-  const cobalt = mix(color(opts.cobaltCavity ?? 0x131e55), color(opts.cobalt ?? 0x2e56b8), cavity);
+  const turquoise = mix(color(opts.glazeCavity ?? 0x1d6b74), color(opts.glaze ?? 0x35bcb0), cavity);
+  const cobalt = mix(color(opts.cobaltCavity ?? 0x1c2c77), color(opts.cobalt ?? 0x3560c4), cavity);
   const painted = paint.clamp(0, 1);
   const hue = paint.sub(1).clamp(0, 1);
   // gilt: each bowl warms toward gold at its apex — colour only, the
