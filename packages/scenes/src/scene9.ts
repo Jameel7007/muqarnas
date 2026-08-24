@@ -1,4 +1,12 @@
-import { Group, Vector3, type LineBasicMaterial, type LineSegments } from 'three';
+import {
+  CircleGeometry,
+  Group,
+  Mesh,
+  MeshBasicMaterial,
+  Vector3,
+  type LineBasicMaterial,
+  type LineSegments,
+} from 'three';
 import { LIGHTING, lerpLighting, type VaultStage } from '@muqarnas/render';
 import { cascadeTiers, type RisingVaultRig } from './rig.js';
 import { inkLines, inkOpacity, smooth, span } from './ink.js';
@@ -30,7 +38,7 @@ export interface Scene9Objects {
   readonly group: Group;
   readonly strokeGroup: Group;
   readonly stroke: LineSegments;
-  readonly point: LineSegments;
+  readonly point: Mesh;
 }
 
 export interface Scene9Dom {
@@ -41,7 +49,8 @@ export interface Scene9Dom {
 
 /**
  * One measure of ink centred where the crown ring left its opening, and
- * the point it contracts into — small, but a mark that holds.
+ * the point it contracts into — a small SOLID dot, not a ring: a point
+ * is filled.
  */
 export function makeScene9Objects(): Scene9Objects {
   const group = new Group();
@@ -49,16 +58,13 @@ export function makeScene9Objects(): Scene9Objects {
   const stroke = inkLines([-0.5, 0, 0.03, 0.5, 0, 0.03], 0.95);
   inkOpacity(stroke, 0);
   strokeGroup.add(stroke);
-  const coords: number[] = [];
-  const n = 12;
-  const r = 0.16;
-  for (let i = 0; i < n; i++) {
-    const a0 = (2 * Math.PI * i) / n;
-    const a1 = (2 * Math.PI * (i + 1)) / n;
-    coords.push(r * Math.cos(a0), r * Math.sin(a0), 0.03, r * Math.cos(a1), r * Math.sin(a1), 0.03);
-  }
-  const point = inkLines(coords, 0.95);
-  inkOpacity(point, 0);
+  const point = new Mesh(
+    new CircleGeometry(0.13, 28),
+    new MeshBasicMaterial({ color: 0xe8e2d5, transparent: true, opacity: 0 }),
+  );
+  point.position.z = 0.03;
+  point.renderOrder = 2;
+  point.visible = false;
   group.add(strokeGroup, point);
   return { group, strokeGroup, stroke, point };
 }
@@ -110,10 +116,12 @@ export function createScene9(
     parts.planLines.visible = m.opacity > 0.01;
 
     // into the module, into the point: the stroke contracts and hands
-    // itself to the mark that holds
+    // itself to the dot that holds
     inkOpacity(objects.stroke, 0.95 * span(p, 0.72, 0.8) * (1 - span(p, 0.9, 0.96)));
     objects.strokeGroup.scale.x = Math.max(0.02, 1 - span(p, 0.84, 0.94));
-    inkOpacity(objects.point, 0.95 * span(p, 0.88, 0.96));
+    const pm = objects.point.material as MeshBasicMaterial;
+    pm.opacity = 0.95 * span(p, 0.88, 0.96);
+    objects.point.visible = pm.opacity > 0.004;
 
     // camera
     let sg = 0;

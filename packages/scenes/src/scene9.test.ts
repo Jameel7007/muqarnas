@@ -34,14 +34,14 @@ describe('scene 9 — the return', () => {
     expect((pos.getY(0) + pos.getY(1)) / 2).toBeCloseTo(0, 12);
   });
 
-  it('the point is a closed mark on the origin', () => {
+  it('the point is a small solid dot on the origin', () => {
     const o = makeScene9Objects();
-    const pos = o.point.geometry.getAttribute('position');
-    expect(pos.count).toBeGreaterThanOrEqual(2 * 8);
-    for (let i = 0; i < pos.count; i++) {
-      expect(Math.hypot(pos.getX(i), pos.getY(i))).toBeCloseTo(0.16, 6);
-    }
-    expect(pos.getX(pos.count - 1)).toBeCloseTo(pos.getX(0), 9);
-    expect(pos.getY(pos.count - 1)).toBeCloseTo(pos.getY(0), 9);
+    o.point.geometry.computeBoundingSphere();
+    const bs = o.point.geometry.boundingSphere!;
+    expect(bs.radius).toBeLessThanOrEqual(0.14);
+    expect(bs.radius).toBeGreaterThan(0.1);
+    expect(Math.hypot(bs.center.x, bs.center.y)).toBeLessThan(1e-6);
+    // filled: a triangulated disk, not a ring of line segments
+    expect(o.point.geometry.getIndex()!.count).toBeGreaterThan(3 * 20);
   });
 });

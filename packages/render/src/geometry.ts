@@ -168,6 +168,12 @@ export function withPaintAttribute(
   // medallion needs a real panel.
   for (const f of fields.values()) {
     const nlen = Math.hypot(f.sumNx, f.sumNy) || 1;
+    // a painter needs a FLAT panel: on a warped quad (the jug's facets,
+    // the arc transitions) interpolated pattern coordinates bend the
+    // figure at the quad's diagonal — the "warped paintings". Planar
+    // fields have bit-identical folded normals, so the mean's length is
+    // exactly 1; any spread shortens it. Warped panels stay bare.
+    if (nlen / f.corners.length < 0.9995) continue;
     const nx = f.sumNx / nlen;
     const ny = f.sumNy / nlen;
     let uMin = Infinity;
