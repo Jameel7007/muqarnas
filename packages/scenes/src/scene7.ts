@@ -50,8 +50,12 @@ interface CamKey {
  * exactly on the descent's first key.
  */
 const ORBIT = {
-  from: 0.055,
-  until: 0.26,
+  // the dissolve needs stillness: hold scene 6's stance until the melt
+  // completes (p < holdUntil), only then leave for the orbit — a camera
+  // moving under the held frame reads as a smeared double-exposure
+  holdUntil: 0.05,
+  from: 0.13,
+  until: 0.28,
   thetaStart: (116.4 * Math.PI) / 180,
   thetaEnd: (286.4 * Math.PI) / 180, // atan2(-34, 10): the descent key's azimuth
   rStart: 58,
@@ -71,7 +75,7 @@ const ORBIT = {
 const EXIT_FROM = { pos: new Vector3(3.5, -9.5, -14), target: new Vector3(0, 0, 22) };
 
 const CAMERA_PATH: CamKey[] = [
-  { at: 0.26, pos: [10, -34, 30], target: [0, 0, 6] }, // drifting upward as it descends
+  { at: 0.28, pos: [10, -34, 30], target: [0, 0, 6] }, // drifting upward as it descends
   { at: 0.5, pos: [0, -6, 56], target: [0, 0, 0] }, // overhead: the drawing again
   { at: 0.76, pos: [-24, -27, 20], target: [0, 0, 8] }, // down the other side
   { at: 1.0, pos: [-26, -17, 7], target: [0, 0, 12] }, // looking up at the second building
@@ -109,7 +113,7 @@ export function createScene7(parts: Scene7Parts, stage: VaultStage, dom: Scene7D
     // camera: out from beneath, then the orbit presents the whole
     // building, then the keys descend
     if (p < ORBIT.from) {
-      const t = smooth(p / ORBIT.from);
+      const t = smooth((p - ORBIT.holdUntil) / (ORBIT.from - ORBIT.holdUntil));
       const ox = ORBIT.rStart * Math.cos(ORBIT.thetaStart);
       const oy = ORBIT.rStart * Math.sin(ORBIT.thetaStart);
       pos.set(

@@ -1,4 +1,4 @@
-import { type LightingState, LIGHTING, type VaultStage } from '@muqarnas/render';
+import { type LightingState, LIGHTING, lerpLighting, type VaultStage } from '@muqarnas/render';
 import { cascadeTiers, type RisingVaultRig } from './rig.js';
 import { smooth } from './ink.js';
 
@@ -80,6 +80,20 @@ export function dayState(p: number): LightingState {
 const ARRIVE_FROM = { pos: [-26, -17, 7] as const, target: [0, 0, 12] as const };
 const CAMERA = { pos: [0.5, -2.5, -16] as const, target: [0, 0, 20] as const };
 
+/**
+ * The 7→8 dissolve holds scene 7's last frame; a camera moving beneath it
+ * smears as a double-exposure. So the approach WAITS at scene 7's stance
+ * until the melt completes, then passes under the rim. The light likewise
+ * eases from the handoff hour into the day's own rake before the sun
+ * starts walking — the day proper still moves nothing but the sun.
+ */
+const ARRIVE_HOLD = 0.04;
+const ARRIVE_UNTIL = 0.12;
+const HANDOFF: LightingState = {
+  ...LIGHTING.rake,
+  sun: { ...LIGHTING.rake.sun, azimuthDeg: DAY_START_DEG },
+};
+
 const smoothstep = (t: number) => {
   const x = Math.min(Math.max(t, 0), 1);
   return x * x * (3 - 2 * x);
@@ -89,7 +103,7 @@ export function createScene8(parts: Scene8Parts, stage: VaultStage, dom: Scene8D
   return (p: number): void => {
     parts.rig.update(cascadeTiers(1, parts.rig.maxTier));
 
-    const arrive = smoothstep(p / 0.08);
+    const arrive = smoothstep((p - ARRIVE_HOLD) / (ARRIVE_UNTIL - ARRIVE_HOLD));
     stage.camera.position.set(
       ARRIVE_FROM.pos[0] + (CAMERA.pos[0] - ARRIVE_FROM.pos[0]) * arrive,
       ARRIVE_FROM.pos[1] + (CAMERA.pos[1] - ARRIVE_FROM.pos[1]) * arrive,
@@ -102,7 +116,8 @@ export function createScene8(parts: Scene8Parts, stage: VaultStage, dom: Scene8D
     );
     stage.controls.update();
 
-    stage.applyLighting(dayState(p));
+    const toDay = smoothstep((p - 0.005) / 0.05);
+    stage.applyLighting(toDay >= 1 ? dayState(p) : lerpLighting(HANDOFF, dayState(p), toDay));
 
     if (dom.captionA) {
       dom.captionA.style.opacity = String(span(p, 0.03, 0.09) * (1 - span(p, 0.15, 0.21)));
