@@ -8,8 +8,9 @@ import type { RisingVaultRig } from './rig.js';
  * The camera leaves the plane for the first time. The plan lies flat — a
  * drawing — then each first-tier tile rises into its cell along the
  * profile, in a sweep around the axis. For this vault "first tier" means
- * the corners: the Takht-i Sulaymān readings all start there, so the
- * corners ignite first, which is the finding as choreography.
+ * the corners: in the corner-starting family this site raises (Harb's
+ * reading of the plate), the first tier stands two cells to a corner, so
+ * the corners ignite first — the finding as choreography.
  *
  * One scalar drives everything (ScrollTrigger scrubs it): the tier-1 rise,
  * the camera's descent from the drawing-view into three-quarter closeness,

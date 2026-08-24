@@ -16,8 +16,10 @@
  *      H = (0, E_z − |EZ|). THE FACTOR is the vertical distance from the
  *      base up to H, where the curve begins:
  *          factor = (2 − (3/5)√3)·m ≈ 0.9607695·m
- *      (al-Kāshī's own sexagesimal value 0;57,38,43,14 ≈ 0.9607556 — his
- *      tiny deficit is documented in Dold-Samplonius, p. 223).
+ *      (the manuscript's 0;57,38,43,14 ≈ 0.9607556, against Dold-Samplonius's
+ *      recalculated 0;57,38,46,12 — she isolates the coefficient discrepancy
+ *      here, and reads it as a mason's working value rather than a plain
+ *      miscalculation; pp. 223, 234).
  *   4. The arc H→Z is "without any doubt one sixth of the circumference":
  *      its centre T completes the equilateral triangle Z–H–T, so
  *      T = (4m/5, factor) and the radius is exactly 4m/5.

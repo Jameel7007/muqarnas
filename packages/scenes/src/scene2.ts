@@ -18,7 +18,8 @@ import { drawOn, inkLines, inkOpacity, smooth, span } from './ink.js';
  * sexagesimal counter bills the surface — the facet counts whole, the roof
  * tapers to the apex and counts half — and lands on the taʿdīl, exactly.
  * Al-Kāshī's own printed value runs a breath short, and the caption says
- * so, because the slip (in his factor digits; Dold-Samplonius 1992, 223)
+ * so, because the discrepancy (entering through his GH digits, isolated
+ * by Dold-Samplonius 1992 and read as a working value, not a slip)
  * is itself part of the record.
  *
  * Every coordinate here comes from kashiProfile() — the same construction
