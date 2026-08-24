@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="How this muqarnas was made: al-Kāshī's method, the Takht-i Sulaymān plate, exact arithmetic, and one module."
+    />
+    <title>Muqarnas — about</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap"
+    />
+    <style>
+      :root {
+        --bg: #14120e;
+        --ink: #e8e2d5;
+        --dim: #9a917d;
+        --accent: #b7a97f;
+        --glaze: #57b3aa;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: 'Cormorant Garamond', Georgia, serif;
+        font-size: 1.22rem;
+        line-height: 1.72;
+        padding: 7rem 1.6rem 9rem;
+      }
+      main {
+        max-width: 40rem;
+        margin: 0 auto;
+      }
+      h1 {
+        font-weight: 600;
+        font-size: 2.2rem;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        margin-left: 0.3em;
+        text-align: center;
+      }
+      .sub {
+        display: block;
+        text-align: center;
+        font-family: Georgia, serif;
+        font-size: 0.68rem;
+        letter-spacing: 0.42em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin: 1rem 0 4.5rem 0.42em;
+      }
+      h2 {
+        font-family: Georgia, serif;
+        font-weight: 400;
+        font-size: 0.72rem;
+        letter-spacing: 0.5em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin: 3.6rem 0 1.1rem 0;
+      }
+      p {
+        margin-bottom: 1.05rem;
+      }
+      em {
+        font-style: italic;
+      }
+      .glz {
+        color: var(--glaze);
+      }
+      ul {
+        list-style: none;
+        margin-bottom: 1.05rem;
+      }
+      li {
+        padding-left: 1.3rem;
+        text-indent: -1.3rem;
+        margin-bottom: 0.55rem;
+      }
+      li::before {
+        content: '—';
+        color: var(--accent);
+        padding-right: 0.55rem;
+      }
+      .num {
+        font-variant-numeric: tabular-nums;
+        color: var(--accent);
+      }
+      a {
+        color: var(--ink);
+        text-decoration: underline;
+        text-decoration-color: var(--accent);
+        text-underline-offset: 0.22em;
+      }
+      a:hover {
+        color: var(--accent);
+      }
+      .back {
+        display: block;
+        text-align: center;
+        margin-top: 5rem;
+        font-family: Georgia, serif;
+        font-size: 0.7rem;
+        letter-spacing: 0.42em;
+        text-transform: uppercase;
+        text-decoration: none;
+        color: var(--dim);
+      }
+      .back:hover {
+        color: var(--accent);
+      }
+      .rule {
+        width: 5rem;
+        height: 1px;
+        background: var(--accent);
+        opacity: 0.5;
+        margin: 3.4rem auto 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Muqarnas</h1>
+      <span class="sub">the vault from its plan</span>
+
+      <p>
+        A muqarnas is the stalactite vault of Islamic architecture: tiers of small carved
+        cells, corbelled ring over ring, that turn a dome's underside into stepped
+        concavities of light. This piece raises one — the vault implied by a
+        fourteenth-century construction drawing — and lets you watch every step of the
+        raising, because the subject of the piece is precisely that the raising is
+        <em>not in the drawing</em>.
+      </p>
+
+      <h2>Nothing is traced</h2>
+      <p>
+        No scan was digitised into vertices. The plan is generated from an alphabet of
+        eight elements — two seeds, the square and the 45° rhombus, and their divisions
+        and remainders — placed on the lattice ℤ&nbsp;+&nbsp;ℤ·(√2/2) and computed in
+        exact arithmetic over ℚ(√2), so the tiling closes with zero tolerance rather
+        than within one. Every measurement descends from one module, al-Kāshī's
+        <em>miqyās</em>: the profile curve, the tier heights, the coefficient the
+        plaster is billed in — all of it is that one length, repeated with knowledge.
+      </p>
+
+      <h2>The drawing</h2>
+      <p>
+        The canonical example is the plate found in the Mongol-era scroll from
+        Takht-i Sulaymān: a quarter-vault plan of 157 elements, published and read in
+        <em>Muqarnas</em> 22. Reflected and turned, it spells the full sky with
+        <span class="num">632</span> letters — using only four of the eight kinds. The
+        digitisation here surfaced a quiet fact: the printed plate stretches one band of
+        its field by exactly <span class="num">5&nbsp;−&nbsp;3.5√2</span> modules to fit
+        its frame. The lattice version needs no such kindness; the regular field span is
+        <span class="num">7&nbsp;+&nbsp;3.5√2</span>.
+      </p>
+
+      <h2>The method</h2>
+      <p>
+        The profile every cell wears is al-Kāshī's "method of the masons"
+        (<em>Miftāḥ al-Ḥisāb</em>, IV.9): strike a 30° oblique, divide it in five, fold
+        two fifths onto the vertical — which forces the facet height
+        <span class="num">2&nbsp;−&nbsp;(3/5)√3</span>, nobody chose it — then one sixth
+        of a circle of radius four fifths, and a ramp. Measured whole-and-half along its
+        length the profile bills <span class="num">1;43,33,48,40</span> modules of
+        surface per module of plan; al-Kāshī's table prints
+        <span class="num">1;43,33,45,41</span>, a breath short in the third sexagesimal
+        place, and the slip hides in his facet digits — Dold-Samplonius found it five
+        centuries later. The piece shows both numbers, because the record's one flaw is
+        also part of the record.
+      </p>
+
+      <h2>The ambiguity</h2>
+      <p>
+        The plan does not determine the vault. A solver enforces the buildability rules
+        — every ring standing on the roofs of the ring below, heights propagating
+        without divergence — and returns <em>all</em> valid readings, not the first.
+        For this plate every reading begins in the corners, two cells to a corner; one
+        reading reaches seventeen tiers to the crown ring, another eighteen. The climax
+        of the piece descends one building into the flat drawing and raises a different
+        building out of it, because at height zero both <em>are</em> the drawing. The
+        master's knowledge was never fully in the plan.
+      </p>
+
+      <h2>The light and the colour</h2>
+      <p>
+        A muqarnas hangs over an opening, so light never falls on it from the sky: it
+        bounces up warm from the court and rakes in low through the opening. The whole
+        lighting of the piece is three fixed states of that language, and its eighth
+        scene moves nothing but the sun. The cells' curved canopy wears a
+        <span class="glz">fired turquoise wash</span> that sinks toward cobalt in its
+        depths — Takht-i Sulaymān's cells wore glazed colour, and the glaze here is
+        colour and gloss only: no metal, no glow that the light did not put there.
+      </p>
+
+      <h2>Sources</h2>
+      <ul>
+        <li>
+          Yvonne Dold-Samplonius, “Practical Arabic Mathematics: Measuring the Muqarnas
+          by al-Kāshī,” <em>Centaurus</em> 35 (1992).
+        </li>
+        <li>
+          Silvia Harmsen, <em>Algorithmic Computer Reconstructions of Stalactite Vaults —
+          Muqarnas — in Islamic Architecture</em>, dissertation, Heidelberg (2006).
+        </li>
+        <li>
+          The Takht-i Sulaymān plate and its reading, <em>Muqarnas</em> 22 (2005).
+        </li>
+        <li>
+          Ghiyāth al-Dīn Jamshīd al-Kāshī, <em>Miftāḥ al-Ḥisāb</em> (1427), book IV,
+          chapter 9.
+        </li>
+      </ul>
+
+      <h2>Colophon</h2>
+      <p>
+        TypeScript throughout; exact rational arithmetic over ℚ(√2) with bigint
+        fractions; the tier solver and the lift are pure geometry with
+        <span class="num">148</span> tests; rendering is three.js WebGPU with TSL node
+        materials, per-vertex occlusion baked against the real geometry, and GSAP
+        ScrollTrigger under a Lenis scroll. The sister piece is
+        <a href="https://jameel7007.github.io/from-the-point-site/">From the Point</a> —
+        this site ends where that one begins.
+      </p>
+
+      <div class="rule"></div>
+      <a class="back" href="./">↑ return to the vault</a>
+    </main>
+  </body>
+</html>
