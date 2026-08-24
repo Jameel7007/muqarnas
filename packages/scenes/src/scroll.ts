@@ -8,10 +8,13 @@ gsap.registerPlugin(ScrollTrigger);
  * fixed; each scene owns a tall track element whose traversal maps to
  * p ∈ [0,1], smoothed slightly so plaster never jitters.
  */
+import { prefersReducedMotion } from './motion.js';
+
 export function bindScrubbedScene(
   track: HTMLElement,
   onProgress: (p: number) => void,
 ): ScrollTrigger {
+  const reduced = prefersReducedMotion();
   const proxy = { p: 0 };
   let latest = 0;
   const apply = () => onProgress(proxy.p);
@@ -21,9 +24,14 @@ export function bindScrubbedScene(
     // scrub to the track's very exit, so between scenes only the runway is
     // dead time — a held frame of 160vh was most of what read as "choppy"
     end: 'bottom top',
-    scrub: 0.5,
+    scrub: reduced ? true : 0.5,
     onUpdate: (self) => {
       latest = self.progress;
+      if (reduced) {
+        proxy.p = latest;
+        apply();
+        return;
+      }
       gsap.to(proxy, {
         p: latest,
         duration: 0.16,

@@ -54,7 +54,7 @@ Detailed extraction notes with page citations: `muqarnas-sources/extraction-note
   plan; (2) one diagonal hexagon completed as two rhombi by restoring its
   missing drawn edge at the "six rhombi join" removable node.
 
-## Still open
+## Status ledger — done and open, per row
 
 | Item | State | Next |
 | --- | --- | --- |

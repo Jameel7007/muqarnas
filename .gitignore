@@ -7,3 +7,6 @@ dist/
 
 # os / editor
 .DS_Store
+
+# typecheck cache
+*.tsbuildinfo

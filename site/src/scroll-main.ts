@@ -115,6 +115,16 @@ async function main() {
   say('opening the stage…');
   rule(1);
   const stage = await createVaultStage(el('#stage'));
+  // the canvas is one long moving image; the piece's text lives in the
+  // sr-only transcript, so the canvas needs only a name, not narration
+  const canvas = el('#stage').querySelector('canvas');
+  if (canvas) {
+    canvas.setAttribute('role', 'img');
+    canvas.setAttribute(
+      'aria-label',
+      'Animated three-dimensional rendering of a muqarnas vault being raised from its plan; the full narration is provided as text on this page.',
+    );
+  }
   stage.controls.enabled = false;
   const material = plasterMaterial();
   const meshA = makeVaultMesh(a.display, material);
@@ -186,7 +196,7 @@ async function main() {
     },
     coda: { objects: [meshB] as Object3D[], caps: caps('#cap-10') },
   };
-  const everything = [s1.group, s2.group, s3.group, s4.group, meshA, meshB, planLines];
+  const everything = [s1.group, s2.group, s3.group, s4.group, meshA, meshB, planLines, s9.group];
   const allCaps = Object.values(worlds).flatMap((w) => w.caps);
   const show = (world: { objects: Object3D[]; caps: HTMLElement[] }) => {
     for (const o of everything) o.visible = world.objects.includes(o);

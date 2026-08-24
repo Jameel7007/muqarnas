@@ -8,7 +8,9 @@ Successor to *From the Point*.
   Exact arithmetic over ℚ(√2): tiling closure and projection identity are tested
   with equality, not epsilons.
 - `packages/lift` — pure TS. Plan + tier assignment → watertight 3D mesh.
-- `site` — Vite app. Currently the inspection/debug page.
+- `site` — Vite app. `index.html` is the piece itself (the scroll-driven site,
+  deployed at <https://jameel7007.github.io/muqarnas/>); `inspect.html` and
+  `render.html` are the inspection/debug pages; `about.html` the scholarly notes.
 
 ```
 npm install

@@ -1,6 +1,7 @@
 import { LIGHTING, lerpLighting, type VaultStage } from '@muqarnas/render';
 import { cascadeTiers, type RisingVaultRig } from './rig.js';
 import { smooth } from './ink.js';
+import { prefersReducedMotion } from './motion.js';
 
 /**
  * THE CODA — the vault, in the viewer's hands.
@@ -35,6 +36,9 @@ const HANDOVER = 0.16;
 const EMBER_END = { ...LIGHTING.ember, exposure: LIGHTING.ember.exposure * 0.86 };
 
 export function createCoda(parts: CodaParts, stage: VaultStage, dom: CodaDom = {}) {
+  // under prefers-reduced-motion the coda does not drive itself: the camera
+  // rests on the site's first frame and the building turns only by drag
+  const reduced = prefersReducedMotion();
   let userDrove = false;
   stage.controls.addEventListener('start', () => {
     userDrove = true;
@@ -52,7 +56,7 @@ export function createCoda(parts: CodaParts, stage: VaultStage, dom: CodaDom = {
       // still through the melt, then out into the turn; until the viewer
       // takes hold, the scroll turns the building
       const theta = (200 * Math.PI) / 180 + 1.35 * Math.PI * smooth((p - HANDOVER) / (1 - HANDOVER));
-      const g = smooth((p - HOLD) / (HANDOVER - HOLD));
+      const g = reduced ? 0 : smooth((p - HOLD) / (HANDOVER - HOLD));
       stage.camera.position.set(
         REST.pos[0] + (48 * Math.cos(theta) - REST.pos[0]) * g,
         REST.pos[1] + (48 * Math.sin(theta) - REST.pos[1]) * g,
