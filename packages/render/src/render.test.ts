@@ -149,3 +149,58 @@ describe('the paint map (the painted vault)', () => {
     expect(top).toBeCloseTo(1, 6); // the apex corner itself
   });
 });
+
+describe('paint frames are consistent wherever surfaces coincide', () => {
+  // the crown group has real double walls between its four cells
+  const plan: Plan = {
+    sector: [pt(-1, -1), pt(1, -1), pt(1, 1), pt(-1, 1)],
+    placed: [0, 2, 4, 6].map((k) => place('square', 'cell', Iso.rotation(k), 1)),
+  };
+  const solved = plan.placed.map((_, i) => ({
+    placedIndex: i,
+    type: 'cell' as const,
+    centralNode: 0,
+    tier: 1,
+  }));
+  const vault = liftVault(plan, solved, { closeBoundary: () => false });
+  const display = toDisplayGeometry(vaultToGeometry(vault));
+  withPaintAttribute(display, vault.tris);
+
+  it('no runaway frames, and one frame per coincident stack', () => {
+    const pos = display.getAttribute('position');
+    const nrm = display.getAttribute('normal');
+    const orn = display.getAttribute('orn');
+    const at = new Map<string, [number, number]>();
+    let real = 0;
+    for (let i = 0; i < pos.count; i++) {
+      if (orn.getZ(i) !== 1) continue;
+      // painted coordinates must stay panel-sized — a blown-up frame means
+      // a degenerate field slipped through
+      expect(Math.abs(orn.getX(i))).toBeLessThan(30);
+      expect(Math.abs(orn.getY(i))).toBeLessThan(30);
+      let nx = nrm.getX(i);
+      let ny = nrm.getY(i);
+      const len = Math.hypot(nx, ny) || 1;
+      nx /= len;
+      ny /= len;
+      if (nx * 0.9848 + ny * 0.1736 < 0) {
+        nx = -nx;
+        ny = -ny;
+      }
+      const k = `${Math.round(nx * 8)},${Math.round(ny * 8)}|${pos.getX(i)},${pos.getY(i)},${pos.getZ(i)}`;
+      const u = orn.getX(i);
+      const v = orn.getY(i);
+      const seen = at.get(k);
+      if (seen === undefined) at.set(k, [u, v]);
+      else {
+        // same position, same facing: either the identical frame (a
+        // coincident stack) or an adjacency sign-mirror — anything else is
+        // two different stars fighting over one wall
+        const mirrorOk =
+          Math.abs(Math.abs(seen[0]) - Math.abs(u)) < 1e-3 && Math.abs(seen[1] - v) < 1e-3;
+        if (!mirrorOk) real++;
+      }
+    }
+    expect(real).toBe(0);
+  });
+});

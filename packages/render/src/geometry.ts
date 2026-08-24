@@ -157,51 +157,99 @@ export function withPaintAttribute(
     }
   }
 
-  // one frame per field, from the field's AVERAGED facing. The tangent
-  // must not come from per-corner normals: the jug's facet quad is
-  // genuinely warped (its two triangles' normals sit ~3° apart), and
-  // per-corner tangents gave each half a slightly different frame — the
-  // sheared figures that survived every earlier grouping fix. With one
-  // averaged tangent the star is a single affine figure across the whole
-  // panel, warped surface or not.
-  const q = (x: number) => Math.round(x * 1e6);
-  const canonical = new Map<string, { uc: number; vc: number; r: number }>();
-  for (const f of fields.values()) {
-    const nlen = Math.hypot(f.sumNx, f.sumNy) || 1;
-    const nx = f.sumNx / nlen;
-    const ny = f.sumNy / nlen;
+  // unify coincident panels into components. Coincidence is decided by
+  // SHARED EXACT VERTICES, not by rectangle identity: a wide panel (a
+  // half-square's collinear double facet) can be backed by TWO smaller
+  // panels from two different neighbouring cells — different rectangles,
+  // same wall — and every such stack must paint identically, or the
+  // depth-fight stitches one big star against two small ones. Coincident
+  // panels share a whole rectangle (three or more bit-exact corners);
+  // merely adjacent panels share one edge (two). Same facing plus ≥3
+  // shared vertices → one component, one union frame. The frame's tangent
+  // comes from the component's AVERAGED facing, never per corner: the
+  // jug's facet quad is genuinely warped (its triangles' normals sit ~3°
+  // apart), and per-corner tangents sheared its star.
+  const fieldList = [...fields.values()];
+  const fparent = fieldList.map((_, i) => i);
+  const ffind = (a: number): number => {
+    let r = a;
+    while (fparent[r] !== r) r = fparent[r]!;
+    while (fparent[a] !== r) {
+      const next = fparent[a]!;
+      fparent[a] = r;
+      a = next;
+    }
+    return r;
+  };
+  const posOwners = new Map<string, number[]>();
+  fieldList.forEach((f, fi) => {
+    const seen = new Set<string>();
+    for (const i of f.corners) {
+      const k = `${f.nk}|${pos.getX(i)},${pos.getY(i)},${pos.getZ(i)}`;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      let owners = posOwners.get(k);
+      if (!owners) {
+        owners = [];
+        posOwners.set(k, owners);
+      }
+      owners.push(fi);
+    }
+  });
+  const sharedCount = new Map<string, number>();
+  for (const owners of posOwners.values()) {
+    for (let a = 0; a < owners.length; a++) {
+      for (let b = a + 1; b < owners.length; b++) {
+        const pk = `${Math.min(owners[a]!, owners[b]!)}-${Math.max(owners[a]!, owners[b]!)}`;
+        const n = (sharedCount.get(pk) ?? 0) + 1;
+        sharedCount.set(pk, n);
+        if (n >= 3) fparent[ffind(owners[a]!)] = ffind(owners[b]!);
+      }
+    }
+  }
+  const components = new Map<number, { members: number[]; sumNx: number; sumNy: number }>();
+  fieldList.forEach((f, fi) => {
+    const root = ffind(fi);
+    let comp = components.get(root);
+    if (!comp) {
+      comp = { members: [], sumNx: 0, sumNy: 0 };
+      components.set(root, comp);
+    }
+    comp.members.push(fi);
+    comp.sumNx += f.sumNx;
+    comp.sumNy += f.sumNy;
+  });
+  for (const comp of components.values()) {
+    const nlen = Math.hypot(comp.sumNx, comp.sumNy) || 1;
+    const nx = comp.sumNx / nlen;
+    const ny = comp.sumNy / nlen;
     let uMin = Infinity;
     let uMax = -Infinity;
     let vMin = Infinity;
     let vMax = -Infinity;
-    let dSum = 0;
-    for (const i of f.corners) {
-      const u = pos.getX(i) * -ny + pos.getY(i) * nx;
-      cornerU[i] = u;
-      uMin = Math.min(uMin, u);
-      uMax = Math.max(uMax, u);
-      vMin = Math.min(vMin, pos.getZ(i));
-      vMax = Math.max(vMax, pos.getZ(i));
-      dSum += pos.getX(i) * nx + pos.getY(i) * ny;
+    for (const fi of comp.members) {
+      for (const i of fieldList[fi]!.corners) {
+        const u = pos.getX(i) * -ny + pos.getY(i) * nx;
+        cornerU[i] = u;
+        uMin = Math.min(uMin, u);
+        uMax = Math.max(uMax, u);
+        vMin = Math.min(vMin, pos.getZ(i));
+        vMax = Math.max(vMax, pos.getZ(i));
+      }
     }
-    // unify coincident panels: same facing, same mean plane offset, same
-    // rectangle — both sides of a double wall are built from the same
-    // lattice points, and distinct planes sit whole lattice steps apart,
-    // so 1e-6 rounding cannot cross a boundary
-    const key = `${f.nk}|${q(dSum / f.corners.length)}|${q(uMin)},${q(uMax)},${q(vMin)},${q(vMax)}`;
-    let frame = canonical.get(key);
-    if (!frame) {
-      frame = {
-        uc: (uMin + uMax) / 2,
-        vc: (vMin + vMax) / 2,
-        r: Math.max(Math.min((uMax - uMin) / 2, (vMax - vMin) / 2), 1e-3),
-      };
-      canonical.set(key, frame);
-    }
-    for (const i of f.corners) {
-      orn[i * 3] = (cornerU[i]! - frame.uc) / frame.r;
-      orn[i * 3 + 1] = (pos.getZ(i) - frame.vc) / frame.r;
-      orn[i * 3 + 2] = 1;
+    // a medallion needs a real panel: degenerate fields — sliver strips of
+    // transition geometry with near-zero extent — stay bare plaster, or
+    // their blown-up frames depth-fight garbage over the true panels
+    if (uMax - uMin < 0.12 || vMax - vMin < 0.12) continue;
+    const uc = (uMin + uMax) / 2;
+    const vc = (vMin + vMax) / 2;
+    const r = Math.min((uMax - uMin) / 2, (vMax - vMin) / 2);
+    for (const fi of comp.members) {
+      for (const i of fieldList[fi]!.corners) {
+        orn[i * 3] = (cornerU[i]! - uc) / r;
+        orn[i * 3 + 1] = (pos.getZ(i) - vc) / r;
+        orn[i * 3 + 2] = 1;
+      }
     }
   }
 
