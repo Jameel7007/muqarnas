@@ -48,12 +48,26 @@ export const DAY_RAKE: LightingState = {
 
 /** The key's azimuth: one full turn, eased, beginning once the camera stands. */
 export function dayAzimuth(p: number): number {
-  return DAY_START_DEG + 360 * span(p, 0.08, 0.96);
+  return DAY_START_DEG + 360 * span(p, 0.06, 0.96);
+}
+
+/**
+ * v2.2 — the sun also climbs: low blades at morning and evening, higher
+ * at noon, exactly like a day. The lock's spirit holds, restated: nothing
+ * moves except THE SUN. Endpoints return to the rake's own elevation so
+ * both handoffs stay seamless.
+ */
+export function dayElevation(p: number): number {
+  const sweep = span(p, 0.06, 0.96);
+  return DAY_RAKE.sun.elevationDeg + 6.5 * Math.sin(Math.PI * sweep);
 }
 
 /** The whole day is one field of one state — the lock, as a function. */
 export function dayState(p: number): LightingState {
-  return { ...DAY_RAKE, sun: { ...DAY_RAKE.sun, azimuthDeg: dayAzimuth(p) } };
+  return {
+    ...DAY_RAKE,
+    sun: { ...DAY_RAKE.sun, azimuthDeg: dayAzimuth(p), elevationDeg: dayElevation(p) },
+  };
 }
 
 /**

@@ -22,6 +22,7 @@ export {
   type Scene8Dom,
   type Scene8Parts,
 } from './scene8.js';
+export { createCoda, type CodaDom, type CodaParts } from './coda.js';
 export {
   createScene9,
   makeScene9Objects,

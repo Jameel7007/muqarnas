@@ -26,6 +26,7 @@ import {
   createScene7,
   createScene8,
   createScene9,
+  createCoda,
   gsap,
   makePlanLines,
   makeScene1Objects,
@@ -83,8 +84,10 @@ async function buildReading(
     },
   });
   const display = toDisplayGeometry(welded);
-  const rig = new RisingVaultRig(display, vault.tris);
+  // paint first: it parts the double walls a hair along their normals, and
+  // the rig must snapshot the parted positions
   withPaintAttribute(display, vault.tris);
+  const rig = new RisingVaultRig(display, vault.tris);
   return { display, rig };
 }
 
@@ -181,6 +184,7 @@ async function main() {
       objects: [meshB, planLines, s9.group] as Object3D[],
       caps: caps('#cap-9a', '#cap-9b', '#cap-9c'),
     },
+    coda: { objects: [meshB] as Object3D[], caps: caps('#cap-10') },
   };
   const everything = [s1.group, s2.group, s3.group, s4.group, meshA, meshB, planLines];
   const allCaps = Object.values(worlds).flatMap((w) => w.caps);
@@ -293,7 +297,20 @@ async function main() {
   });
   bindScrubbedScene(el('#scene9-track'), (p) => {
     show(worlds.nine);
+    stage.controls.enabled = false;
     scene9(p);
+  });
+
+  // the coda: the vault in the viewer's hands — drag turns it, scroll
+  // still scrolls
+  const coda = createCoda({ rig: b.rig }, stage, {
+    caption: el('#cap-10'),
+    hint: el('#drag-hint'),
+  });
+  bindScrubbedScene(el('#coda-track'), (p) => {
+    show(worlds.coda);
+    stage.controls.enabled = true;
+    coda(p);
   });
 
   // a cross-dissolve across each hard chapter cut: the frozen outgoing

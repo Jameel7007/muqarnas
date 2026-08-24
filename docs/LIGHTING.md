@@ -86,3 +86,12 @@ documented here so the lock stays honest:
    plaster around it, so the low key answers off the bowls with sheen.
    It is colour and roughness only — still a dielectric, no metalness,
    no emissive. Facets, bands, and walls stay bare plaster.
+
+## v2.2 — the day moves the sun (2026-08-24)
+
+Scene 8's rule, restated at the user's direction: nothing moves except
+THE SUN. The azimuth still walks its full turn; the elevation now
+climbs with it — low blades at morning and evening, higher at noon,
+returning exactly to the rake's own elevation at both ends so the
+handoffs stay seamless. The key never rises above the horizontal:
+light still never falls on a muqarnas from the sky.

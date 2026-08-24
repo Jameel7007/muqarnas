@@ -50,6 +50,7 @@ interface CamKey {
  * exactly on the descent's first key.
  */
 const ORBIT = {
+  from: 0.055,
   until: 0.26,
   thetaStart: (116.4 * Math.PI) / 180,
   thetaEnd: (286.4 * Math.PI) / 180, // atan2(-34, 10): the descent key's azimuth
@@ -60,6 +61,14 @@ const ORBIT = {
   targetStart: new Vector3(0, 0, 15),
   targetEnd: new Vector3(0, 0, 6),
 };
+
+/**
+ * Scene 6 ends beneath the vault; cutting straight to the far orbit was
+ * the last abrupt jump in the piece. The scene now LEAVES: out from under
+ * the rim along the reverse of scene 8's arrival, rising into the orbit's
+ * first stance.
+ */
+const EXIT_FROM = { pos: new Vector3(3.5, -9.5, -14), target: new Vector3(0, 0, 22) };
 
 const CAMERA_PATH: CamKey[] = [
   { at: 0.26, pos: [10, -34, 30], target: [0, 0, 6] }, // drifting upward as it descends
@@ -97,9 +106,20 @@ export function createScene7(parts: Scene7Parts, stage: VaultStage, dom: Scene7D
       parts.planLines.visible = m.opacity > 0.01;
     }
 
-    // camera: the orbit presents the whole building, then the keys descend
-    if (p < ORBIT.until) {
-      const t = smooth(p / ORBIT.until);
+    // camera: out from beneath, then the orbit presents the whole
+    // building, then the keys descend
+    if (p < ORBIT.from) {
+      const t = smooth(p / ORBIT.from);
+      const ox = ORBIT.rStart * Math.cos(ORBIT.thetaStart);
+      const oy = ORBIT.rStart * Math.sin(ORBIT.thetaStart);
+      pos.set(
+        EXIT_FROM.pos.x + (ox - EXIT_FROM.pos.x) * t,
+        EXIT_FROM.pos.y + (oy - EXIT_FROM.pos.y) * t,
+        EXIT_FROM.pos.z + (ORBIT.zStart - EXIT_FROM.pos.z) * t,
+      );
+      tgt.copy(EXIT_FROM.target).lerp(ORBIT.targetStart, t);
+    } else if (p < ORBIT.until) {
+      const t = smooth((p - ORBIT.from) / (ORBIT.until - ORBIT.from));
       const theta = ORBIT.thetaStart + (ORBIT.thetaEnd - ORBIT.thetaStart) * t;
       const r = ORBIT.rStart + (ORBIT.rEnd - ORBIT.rStart) * t;
       pos.set(r * Math.cos(theta), r * Math.sin(theta), ORBIT.zStart + (ORBIT.zEnd - ORBIT.zStart) * t);

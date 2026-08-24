@@ -108,10 +108,27 @@
         height: 680vh;
       }
       #scene8-track {
-        height: 1000vh;
+        height: 1300vh;
       }
       #scene9-track {
         height: 620vh;
+      }
+      #coda-track {
+        height: 500vh;
+      }
+      #drag-hint {
+        position: fixed;
+        bottom: 2.2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.68rem;
+        letter-spacing: 0.4em;
+        text-transform: uppercase;
+        color: var(--dim);
+        z-index: 2;
+        opacity: 0;
+        transition: opacity 0.6s ease;
+        pointer-events: none;
       }
       .runway {
         height: 40vh;
@@ -445,7 +462,13 @@
       <p>Into the module. Into the point it was struck from. Everything here grew out
       of this, and goes back into it. Good night.</p>
     </div>
+    <div class="scene-caption" id="cap-10">
+      <span class="num">coda — in your hands</span>
+      <p>The vault is yours now. Drag to turn it — from any side, and from beneath,
+      where it was always meant to be seen.</p>
+    </div>
     <span id="hint">scroll</span>
+    <span id="drag-hint">drag to turn</span>
 
     <div class="track" id="intro-track"></div>
     <div class="track" id="scene1-track"></div>
@@ -465,6 +488,8 @@
     <div class="track" id="scene8-track"></div>
     <div class="track runway"></div>
     <div class="track" id="scene9-track"></div>
+    <div class="track runway cut"></div>
+    <div class="track" id="coda-track"></div>
     <div class="track runway"></div>
 
     <canvas id="dissolve"></canvas>
