@@ -167,7 +167,7 @@ import{w as X,p as w,f as P,I as F,u as te,g as ne,i as oe,M as ae,A as ie,E as 
   <header class="masthead">
     <h1>Muqarnas</h1>
     <p class="sub">plan inspection — the element alphabet, al-Kāshī's profile, and the exact-cover
-    invariant · <a href="/render.html" style="color: var(--accent)">the render stage →</a></p>
+    invariant · <a href="./render.html" style="color: var(--accent)">the render stage →</a></p>
   </header>
   ${we()}
   ${ye()}

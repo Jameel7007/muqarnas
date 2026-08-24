@@ -138,7 +138,10 @@
         left: 50%;
         transform: translateX(-50%);
         bottom: 7.5vh;
-        max-width: 37rem;
+        /* explicit width: a centred fixed box otherwise shrink-fits against
+           half the viewport and collapses to a word-wide column on phones */
+        width: min(37rem, calc(100vw - 2rem));
+        box-sizing: border-box;
         padding: 1.5rem 2.2rem 1.7rem;
         text-align: center;
         opacity: 0;
@@ -174,6 +177,28 @@
         text-shadow:
           0 1px 14px rgba(10, 9, 6, 0.95),
           0 0 3px rgba(10, 9, 6, 0.85);
+      }
+      @media (max-width: 640px) {
+        .scene-caption {
+          padding: 1.1rem 1.2rem 1.3rem;
+          bottom: 5.5vh;
+        }
+        .scene-caption p {
+          font-size: 1.08rem;
+          line-height: 1.55;
+        }
+      }
+      /* the piece for ears: visually hidden, fully readable */
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
       }
       #dissolve {
         position: fixed;
@@ -273,7 +298,7 @@
         }
       }
     </style>
-    <script type="module" crossorigin src="/muqarnas/assets/main-D2zqbD5F.js"></script>
+    <script type="module" crossorigin src="/muqarnas/assets/main-C6xAhfTU.js"></script>
     <link rel="modulepreload" crossorigin href="/muqarnas/assets/solver-BibGwqpk.js">
     <link rel="modulepreload" crossorigin href="/muqarnas/assets/stage-Cvxnwfy_.js">
     <link rel="stylesheet" crossorigin href="/muqarnas/assets/solver-Dp4mz5J1.css">
@@ -289,6 +314,91 @@
     </div>
     <a id="about-link" href="about.html">about</a>
 
+    <!-- the piece, for readers who hear it: the visual text layer below is
+         scroll-choreographed opacity, meaningless read all at once, so it is
+         hidden from assistive tech and the whole narrative lives here -->
+    <section class="sr-only" aria-label="Muqarnas — the piece as text">
+      <h1>Muqarnas — the vault from its plan</h1>
+      <p>
+        This page is a scroll-driven three-dimensional piece. As you scroll, a
+        medieval vault design is drawn, solved, and raised before the camera; this
+        section carries its full narration in reading order.
+      </p>
+      <p>
+        A muqarnas — Arabic muqarnaṣ — is the stalactite vault of Islamic
+        architecture: tiers of small carved cells, ring upon ring, that turn a
+        dome's underside into stepped concavities of light. By the eleventh century
+        it crowned portals and domes from Samarkand to Córdoba. In the fifteenth,
+        the astronomer al-Kāshī wrote down the masons' method — one module, one
+        curve, one table of measures. This site raises a vault his way, from a
+        single thirteenth-century drawing.
+      </p>
+      <p>
+        I — the square and the circle. A square room, a round dome: they do not
+        meet, and whatever the dome stands on, the corners are left over. The zone
+        of transition is the gap between the room a builder can make and the dome a
+        builder wants; everything that follows is its answer.
+      </p>
+      <p>
+        II — the module. One measure runs through everything: the miqyās, the base
+        of the largest facet; a cell stands exactly two of it tall. The masons'
+        recipe as al-Kāshī wrote it: strike an oblique at thirty degrees, divide it
+        in five, fold two fifths onto the vertical — a facet, one sixth of a
+        circle, a ramp, nothing else. The taʿdīl coefficient, 1;43,33,48,40 in
+        sexagesimal, turns a cell's facet-bases into its surface; the manuscript
+        tables 1;43,33,45,41, the difference entering through al-Kāshī's facet
+        height, isolated by Dold-Samplonius five centuries later. Two profiles face
+        to face make the niche every cell is cast from.
+      </p>
+      <p>
+        III — the alphabet. Two seeds, the square and the forty-five-degree
+        rhombus; their divisions and remainders give eight letters — halves, the
+        jug, the almond, two bipeds. Cells wear roofs; bipeds only connect. The
+        full drawing spells the sky with 632 letters yet uses only four of the
+        eight kinds.
+      </p>
+      <p>
+        IV — the plan. The master rules frame, seams, and diagonals, and writes one
+        quarter from a corner in toward the crown — 157 letters in this
+        digitisation's count. Symmetry turns it four times, four diamonds stitch
+        the seams, and the word is whole: 632.
+      </p>
+      <p>
+        V — the lift. This is not a rosette; it is a building seen from above. The
+        first tier stands, two cells to a corner — the family Harb proposed for the
+        plate, and the one this site raises.
+      </p>
+      <p>
+        VI — tier on tier. Each ring stands on the roofs of the ring below; nothing
+        floats, or the whole reading is refused. The crown closes to a ring, not a
+        point. Stand beneath it: everything the drawing knew is over your head.
+      </p>
+      <p>
+        VII — the same plan, twice. A vault stands: one reading, seventeen tiers to
+        the crown ring. It descends into its plan; the plan holds; it rises again,
+        differently — same projection, different building, both correct. The
+        drawing does not determine the building, and the master's knowledge was
+        never fully in the plan.
+      </p>
+      <p>
+        VIII — the day. Nothing moves except the sun. Each cell is a cup set at its
+        own angle; as the light walks the horizon every cup fills and empties in
+        its own time, and when the sun returns to where it began, nothing has
+        looked the same twice.
+      </p>
+      <p>
+        IX — the return. The ember hour: ring gives back ring, down through the
+        tiers, into the plan, into the module, into the point it was struck from.
+        Everything here grew out of this, and goes back into it. Good night.
+      </p>
+      <p>
+        Coda — the vault is yours: on a pointer device, drag to turn it from any
+        side, and from beneath, where it was always meant to be seen. A fuller
+        scholarly account, with sources, is on the about page.
+      </p>
+    </section>
+
+    <div id="visual-text" aria-hidden="true">
     <div id="intro">
       <h1>Muqarnas</h1>
       <div class="rule"></div>
@@ -473,6 +583,7 @@
     </div>
     <span id="hint">scroll</span>
     <span id="drag-hint">drag to turn</span>
+    </div>
 
     <div class="track" id="intro-track"></div>
     <div class="track" id="scene1-track"></div>
@@ -496,6 +607,6 @@
     <div class="track" id="coda-track"></div>
     <div class="track runway"></div>
 
-    <canvas id="dissolve"></canvas>
+    <canvas id="dissolve" aria-hidden="true"></canvas>
   </body>
 </html>
