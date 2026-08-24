@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "vite --port 5175 --strictPort",
     "build": "vite build",
+    "prebake": "tsx scripts/prebake.ts",
     "preview": "vite preview --port 5175 --strictPort",
-    "deploy": "vite build && gh-pages -d dist"
+    "deploy": "npm run prebake && vite build && gh-pages -d dist"
   },
   "dependencies": {
     "@muqarnas/lift": "*",

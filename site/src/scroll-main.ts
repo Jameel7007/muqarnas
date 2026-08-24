@@ -1,17 +1,31 @@
 import './style.css';
 import Lenis from 'lenis';
-import type { Object3D } from 'three';
-import { Iso, PLATE_FIELD_SPAN, takhtPlateFull, type Pt } from '@muqarnas/plan';
-import { enumerateAssignments, liftVault, type TierSolution } from '@muqarnas/lift';
+import type { BufferGeometry, Object3D } from 'three';
+import { PLATE_FIELD_SPAN, takhtPlateFull } from '@muqarnas/plan';
+import {
+  enumerateAssignments,
+  liftVault,
+  type LiftedTriangle,
+  type TierSolution,
+} from '@muqarnas/lift';
 import {
   bakeVertexAO,
   createVaultStage,
+  decodeBakedReading,
   makeVaultMesh,
   plasterMaterial,
   toDisplayGeometry,
   vaultToGeometry,
   withPaintAttribute,
 } from '@muqarnas/render';
+import {
+  BAKED_FILES,
+  LIFT_OPTS,
+  PLATE_SYMMETRIES,
+  PREBAKE_PARAMS,
+  RECIPE_HASH,
+  pickReadings,
+} from './recipe.js';
 import {
   RisingVaultRig,
   ScrollTrigger,
@@ -51,17 +65,34 @@ const rule = (frac: number) => {
   el('#load-rule i').style.width = `${Math.round(100 * Math.min(1, Math.max(0, frac)))}%`;
 };
 
-const PLATE_SYMMETRIES = [0, 2, 4, 6].flatMap((k) => [
-  Iso.rotation(k),
-  Iso.reflection(2).then(Iso.rotation(k)),
-]);
-const openCentre = (a: Pt, b: Pt) => {
-  const [ax, ay] = a.toNumbers();
-  const [bx, by] = b.toNumbers();
-  return !(Math.hypot(ax, ay) < 4.3 && Math.hypot(bx, by) < 4.3);
-};
+/**
+ * Display geometry + rig from a welded, occluded geometry — the shared
+ * tail of both paths. Paint first: it parts the double walls a hair
+ * along their normals, and the rig must snapshot the parted positions.
+ */
+function finishReading(welded: BufferGeometry, tris: readonly LiftedTriangle[]) {
+  const display = toDisplayGeometry(welded);
+  withPaintAttribute(display, tris);
+  const rig = new RisingVaultRig(display, tris);
+  return { display, rig };
+}
 
-async function buildReading(
+/**
+ * The fast path: versioned pre-baked assets from the build (see
+ * scripts/prebake.ts). Any mismatch — missing file, foreign schema,
+ * stale recipe hash — returns null and the site computes live instead.
+ */
+async function loadBaked(key: keyof typeof BAKED_FILES) {
+  try {
+    const res = await fetch(`${import.meta.env.BASE_URL}${BAKED_FILES[key]}`);
+    if (!res.ok) return null;
+    return decodeBakedReading(await res.arrayBuffer(), RECIPE_HASH);
+  } catch {
+    return null;
+  }
+}
+
+async function buildReadingLive(
   plan: ReturnType<typeof takhtPlateFull>,
   solution: TierSolution,
   label: string,
@@ -69,26 +100,16 @@ async function buildReading(
 ) {
   say(`${label}: raising the vault…`);
   await new Promise((r) => setTimeout(r, 30));
-  const vault = liftVault(plan, solution.faces, {
-    arcSegments: 4,
-    rampSegments: 2,
-    closeBoundary: openCentre,
-  });
+  const vault = liftVault(plan, solution.faces, LIFT_OPTS);
   const welded = vaultToGeometry(vault);
   await bakeVertexAO(welded, {
-    rays: 40,
-    maxDistance: 7,
+    ...PREBAKE_PARAMS.ao,
     onProgress: (done, total) => {
       say(`${label}: baking the light`);
       rule(ruleBase + (0.46 * done) / total);
     },
   });
-  const display = toDisplayGeometry(welded);
-  // paint first: it parts the double walls a hair along their normals, and
-  // the rig must snapshot the parted positions
-  withPaintAttribute(display, vault.tris);
-  const rig = new RisingVaultRig(display, vault.tris);
-  return { display, rig };
+  return finishReading(welded, vault.tris);
 }
 
 async function main() {
@@ -97,20 +118,30 @@ async function main() {
   gsap.ticker.add((time) => lenis.raf(time * 1000));
   gsap.ticker.lagSmoothing(0);
 
-  say('solving the plate…');
+  say('drawing the plate…');
   await new Promise((r) => setTimeout(r, 30));
   const plan = takhtPlateFull();
-  const report = enumerateAssignments(plan, { maxFreeOrbits: 20, symmetries: PLATE_SYMMETRIES });
-  const readingA =
-    report.solutions.find((s) => s.graphReach === 17) ?? report.solutions[0]!;
-  const readingB =
-    report.solutions.find((s) => s.graphReach === 18) ??
-    report.solutions.find((s) => s !== readingA) ??
-    readingA;
 
-  rule(0.05);
-  const a = await buildReading(plan, readingA, 'first reading', 0.05);
-  const b = await buildReading(plan, readingB, 'second reading', 0.51);
+  say('unrolling the vaults…');
+  rule(0.2);
+  const [bakedA, bakedB] = await Promise.all([loadBaked('a'), loadBaked('b')]);
+  let a: ReturnType<typeof finishReading>;
+  let b: ReturnType<typeof finishReading>;
+  if (bakedA && bakedB) {
+    rule(0.85);
+    a = finishReading(bakedA.welded, bakedA.tris);
+    b = finishReading(bakedB.welded, bakedB.tris);
+  } else {
+    // missing or stale assets: solve, lift, and bake live — slower, but
+    // always correct, and the only path the inspection pages ever use
+    say('solving the plate…');
+    await new Promise((r) => setTimeout(r, 30));
+    const report = enumerateAssignments(plan, { maxFreeOrbits: 20, symmetries: PLATE_SYMMETRIES });
+    const readings = pickReadings(report.solutions);
+    rule(0.05);
+    a = await buildReadingLive(plan, readings.a, 'first reading', 0.05);
+    b = await buildReadingLive(plan, readings.b, 'second reading', 0.51);
+  }
 
   say('opening the stage…');
   rule(1);
