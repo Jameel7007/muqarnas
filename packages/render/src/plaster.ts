@@ -4,6 +4,7 @@ import {
   abs,
   attribute,
   color,
+  faceDirection,
   float,
   max,
   mix,
@@ -95,7 +96,16 @@ export function plasterMaterial(opts: PlasterOptions = {}): MeshStandardNodeMate
     smoothstep(K.mul(0.4).add(e), K.mul(0.4).sub(e), sq),
     smoothstep(K.mul(0.56).add(e), K.mul(0.56).sub(e), di),
   );
-  const stencil = star.mul(orn.z).mul(float(opts.ornamentStrength ?? 0.62));
+  // a panel wears its figure on its painted face only. The double walls
+  // are parted leaves, and where a taller back leaf's margin shows past
+  // a shorter front one, the double-sided material renders that margin
+  // from BEHIND — a mirrored fragment of the back panel's star lying
+  // over the front panel's true figure. The back of a painted panel is
+  // bare plaster: faceDirection is +1 on the painted face, −1 behind it.
+  const stencil = star
+    .mul(orn.z)
+    .mul(faceDirection.clamp(0, 1))
+    .mul(float(opts.ornamentStrength ?? 0.62));
   const plasterCol = mix(plasterBare, mix(color(0x6b3020), color(opts.ochre ?? 0xb35a30), cavity), stencil);
 
   const turquoise = mix(color(opts.glazeCavity ?? 0x1d6b74), color(opts.glaze ?? 0x35bcb0), cavity);
