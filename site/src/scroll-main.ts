@@ -225,13 +225,20 @@ async function main() {
       objects: [meshB, planLines, s9.group] as Object3D[],
       caps: caps('#cap-9a', '#cap-9b', '#cap-9c'),
     },
-    coda: { objects: [meshB] as Object3D[], caps: caps('#cap-10') },
+    coda: { objects: [meshB] as Object3D[], caps: caps('#cap-10', '#coda-panel') },
   };
   const everything = [s1.group, s2.group, s3.group, s4.group, meshA, meshB, planLines, s9.group];
   const allCaps = Object.values(worlds).flatMap((w) => w.caps);
   const show = (world: { objects: Object3D[]; caps: HTMLElement[] }) => {
     for (const o of everything) o.visible = world.objects.includes(o);
-    for (const c of allCaps) if (!world.caps.includes(c)) c.style.opacity = '0';
+    for (const c of allCaps) {
+      if (!world.caps.includes(c)) {
+        c.style.opacity = '0';
+        // interactive overlays (the coda's light bar) must not linger as
+        // invisible click targets over other scenes
+        c.style.pointerEvents = 'none';
+      }
+    }
   };
 
   const scene1 = createScene1(s1, stage, {
@@ -347,6 +354,8 @@ async function main() {
   const coda = createCoda({ rig: b.rig }, stage, {
     caption: el('#cap-10'),
     hint: el('#drag-hint'),
+    panel: el('#coda-panel'),
+    light: el('#coda-light') as HTMLInputElement,
   });
   bindScrubbedScene(el('#coda-track'), (p) => {
     show(worlds.coda);
