@@ -178,6 +178,38 @@
           0 1px 14px rgba(10, 9, 6, 0.95),
           0 0 3px rgba(10, 9, 6, 0.85);
       }
+      /* the coda's light bar — the low sun, in the viewer's hands */
+      #coda-panel {
+        position: fixed;
+        right: 2rem;
+        bottom: 2.2rem;
+        z-index: 3;
+        opacity: 0;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+      }
+      #coda-panel label {
+        font-size: 0.62rem;
+        letter-spacing: 0.4em;
+        text-transform: uppercase;
+        color: var(--dim);
+      }
+      #coda-panel input {
+        width: 10rem;
+        accent-color: var(--accent);
+        cursor: pointer;
+      }
+      @media (max-width: 640px) {
+        #coda-panel {
+          right: 1rem;
+          bottom: 4.8rem;
+        }
+        #coda-panel input {
+          width: 7rem;
+        }
+      }
       @media (max-width: 640px) {
         .scene-caption {
           padding: 1.1rem 1.2rem 1.3rem;
@@ -298,7 +330,7 @@
         }
       }
     </style>
-    <script type="module" crossorigin src="/muqarnas/assets/main-m6MZwpIi.js"></script>
+    <script type="module" crossorigin src="/muqarnas/assets/main-h5Vx-qKu.js"></script>
     <link rel="modulepreload" crossorigin href="/muqarnas/assets/solver-BibGwqpk.js">
     <link rel="modulepreload" crossorigin href="/muqarnas/assets/stage-2RT6Hlrr.js">
     <link rel="stylesheet" crossorigin href="/muqarnas/assets/solver-Dp4mz5J1.css">
@@ -393,8 +425,9 @@
       </p>
       <p>
         Coda — the vault is yours: on a pointer device, drag to turn it from any
-        side, and from beneath, where it was always meant to be seen. A fuller
-        scholarly account, with sources, is on the about page.
+        side, and from beneath, where it was always meant to be seen; pinch or
+        ctrl-scroll zooms, and a slider walks the low light around the horizon.
+        A fuller scholarly account, with sources, is on the about page.
       </p>
     </section>
 
@@ -582,7 +615,20 @@
       where it was always meant to be seen.</p>
     </div>
     <span id="hint">scroll</span>
-    <span id="drag-hint">drag to turn</span>
+    <span id="drag-hint">drag to turn · pinch to zoom</span>
+    </div>
+
+    <div id="coda-panel">
+      <label for="coda-light">light</label>
+      <input
+        id="coda-light"
+        type="range"
+        min="0"
+        max="360"
+        step="1"
+        value="35"
+        aria-label="Light direction, degrees around the horizon"
+      />
     </div>
 
     <div class="track" id="intro-track"></div>
