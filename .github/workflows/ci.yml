@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: typecheck, tests, provenance, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test
+
+      # The plate's element arrangement is digitized, so the generated data file
+      # must stay reproducible from the committed lattice segments alone — no
+      # scan present, none ever committed. If this step fails, the published
+      # provenance no longer matches the data the site is built from.
+      - name: Provenance — regenerate the plate placements from committed segments
+        run: |
+          node tools/digitize-plate.mjs \
+            docs/data/takht-plate-segments.json \
+            packages/plan/src/takht-plate-data.ts
+          git diff --exit-code -- packages/plan/src/takht-plate-data.ts
+
+      - name: Build the site
+        run: npm run build

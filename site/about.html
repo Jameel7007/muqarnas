@@ -139,17 +139,31 @@
         <em>not in the drawing</em>.
       </p>
 
-      <h2>Nothing is traced</h2>
+      <h2>What is constructed, and what is read</h2>
       <p>
-        No scan was digitised into vertices. The plan is generated from an alphabet of
-        eight elements — two seeds, the square and the 45° rhombus, and their divisions
+        No vertex is traced. Every element is generated from an alphabet of
+        eight — two seeds, the square and the 45° rhombus, and their divisions
         and remainders — placed on the coordinate module
         <span class="num">(ℤ&nbsp;+&nbsp;ℤ·(√2/2))²</span>, the integer representation
         Harmsen builds for exactly this geometry, and computed in exact arithmetic over
-        ℚ(√2), so the tiling closes with zero tolerance rather than within one. Every
-        measurement descends from one module, al-Kāshī's <em>miqyās</em>: the profile
-        curve, the tier heights, the coefficient the plaster is billed in — all of it
-        is that one length, repeated with knowledge.
+        ℚ(√2), so the tiling closes with zero tolerance rather than within one.
+      </p>
+      <p>
+        The plate's <em>arrangement</em> is a different kind of fact, and it is not
+        invented here. Which letter sits where, at what orientation, is digitised from
+        the vector line work of Harmsen's fig. 5.17(a) by a tool kept in this
+        repository: it snaps each coordinate to the lattice, splits the segments at
+        their T-junctions, extracts the faces of the resulting subdivision, and
+        classifies every face as one of the eight letters. What it records is a kind
+        and an isometry — never a raw vertex — so the library still constructs each
+        outline itself. Said plainly, because the distinction matters: the alphabet
+        and all of its geometry are generated; the plate's arrangement is digitised
+        from a published drawing and regularised onto the lattice.
+      </p>
+      <p>
+        Every measurement descends from one module, al-Kāshī's <em>miqyās</em>: the
+        profile curve, the tier heights, the coefficient the plaster is billed in —
+        all of it is that one length, repeated with knowledge.
       </p>
 
       <h2>The drawing</h2>
@@ -243,7 +257,7 @@
       <p>
         TypeScript throughout; exact rational arithmetic over ℚ(√2) with bigint
         fractions; the tier solver and the lift are pure geometry with
-        <span class="num">156</span> tests; rendering is three.js WebGPU with TSL node
+        <span class="num">184</span> tests; rendering is three.js WebGPU with TSL node
         materials, per-vertex occlusion baked against the real geometry, and GSAP
         ScrollTrigger under a Lenis scroll. The sister piece is
         <a href="https://jameel7007.github.io/from-the-point-site/">From the Point</a> —

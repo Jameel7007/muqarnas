@@ -1,6 +1,8 @@
 # Sources and readings
 
-Primary sources (scans stay local in `~/Code/muqarnas-sources/`, never committed):
+Primary and secondary sources. Scans are held locally in a sibling directory
+outside this repository and are never committed (governing principle 4); the
+paths below are deliberately relative rather than absolute.
 
 1. Ghiyāth al-Dīn al-Kāshī, *Miftāḥ al-Ḥisāb* (1427), Book IV ch. 9 — via [2].
 2. Y. Dold-Samplonius, "Practical Arabic Mathematics: Measuring the Muqarnas
@@ -12,8 +14,16 @@ Primary sources (scans stay local in `~/Code/muqarnas-sources/`, never committed
    diss. Heidelberg (2006). **Extracted** (element formalism ch. 2, validity
    rules ch. 3, Takht-i Sulaymān ch. 5).
 5. G. Necipoğlu, *The Topkapı Scroll* (1995) — pattern-book context only so far.
+6. U. Harb, *Ilkhanidische Stalaktitengewölbe: Beiträge zu Entwurf und Bautechnik*,
+   Archäologische Mitteilungen aus Iran, Ergänzungsband 4 (Berlin: Dietrich Reimer,
+   1978). **Not consulted directly.** This is the primary attribution for the
+   corner-starting reading the site stages, and it reaches this project *secondhand*,
+   through Harmsen [4] ch. 5 and Dold-Samplonius & Harmsen [3]. Every statement here
+   about "the reading Harb proposed" rests on their account of it, not on Harb's own
+   text; anyone checking the attribution should go to [6] directly.
 
-Detailed extraction notes with page citations: `muqarnas-sources/extraction-notes.md`.
+Detailed extraction notes with page citations live beside the scans, in the
+local sources directory (`extraction-notes.md`).
 
 ## Pinned by the sources (implemented and tested)
 
@@ -45,7 +55,9 @@ Detailed extraction notes with page citations: `muqarnas-sources/extraction-note
 - **The Takht-i Sulaymān quarter plan** (`takht.ts` + generated
   `takht-plate-data.ts`) — 157 elements (61 squares, 90 rhombi, 2 jugs,
   4 half-rhombi), digitized from the vector line work of Harmsen fig.
-  5.17(a) by `tools/digitize-plate.mjs`, exact cover verified, area exactly
+  5.17(a) by `tools/digitize-plate.mjs` — the lattice-snapped input segments are
+  committed as `docs/data/takht-plate-segments.json`, so the generated
+  `takht-plate-data.ts` can be reproduced without the scan — exact cover verified, area exactly
   61 + 47√2, symmetric about the diagonal. Two documented departures:
   (1) regularization — the incised design hides a misfit of Δ = 5 − 3.5√2
   ≈ 0.0503 modules (≈ 1.8 mm on the plate) in a bent band of semi-regular

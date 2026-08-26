@@ -1,0 +1,80 @@
+cff-version: 1.2.0
+title: "Muqarnas: the vault from its plan"
+message: >-
+  If you use this software, its reconstruction, or its findings, please cite it
+  as below. Software is MIT licensed; the writing, visuals, and data are
+  CC BY 4.0.
+type: software
+authors:
+  - family-names: Jameel
+    given-names: Muhammad
+abstract: >-
+  A computational reconstruction of the muqarnas vault implied by the
+  thirteenth-century gypsum plate found at Takht-i Sulaymān. The element
+  alphabet and all element geometry are generated in exact arithmetic over
+  ℚ(√2) on the coordinate module (ℤ + ℤ·√2/2)²; the plate's element
+  arrangement is digitized from published vector line work and regularized onto
+  that lattice. A tier-assignment solver returns every valid reading of the
+  corner-starting family rather than the first, and two of them are raised as
+  differing vaults from the same projection, in a scroll-driven WebGPU piece.
+  The digitization surfaces a measurable finding: the plate's regular field
+  spans 7 + 3.5√2 ≈ 11.9497 modules, and the incised design absorbs the misfit
+  to an even 12 by stretching one band by exactly the remainder 5 − 3.5√2.
+keywords:
+  - muqarnas
+  - Islamic architecture
+  - Takht-i Sulaymān
+  - architectural reconstruction
+  - computational geometry
+  - exact arithmetic
+  - al-Kāshī
+  - digital humanities
+license:
+  - MIT
+  - CC-BY-4.0
+repository-code: "https://github.com/Jameel7007/muqarnas"
+url: "https://jameel7007.github.io/muqarnas/"
+references:
+  - type: article
+    title: "Practical Arabic Mathematics: Measuring the Muqarnas by al-Kāshī"
+    authors:
+      - family-names: Dold-Samplonius
+        given-names: Yvonne
+    journal: Centaurus
+    volume: 35
+    year: 1992
+    start: 193
+    end: 242
+  - type: article
+    title: "The Muqarnas Plate Found at Takht-i Sulaymān: A New Interpretation"
+    authors:
+      - family-names: Dold-Samplonius
+        given-names: Yvonne
+      - family-names: Harmsen
+        given-names: Silvia
+    journal: Muqarnas
+    volume: 22
+    year: 2005
+    start: 85
+    end: 94
+  - type: thesis
+    title: "Algorithmic Computer Reconstructions of Stalactite Vaults — Muqarnas — in Islamic Architecture"
+    authors:
+      - family-names: Harmsen
+        given-names: Silvia
+    institution:
+      name: Universität Heidelberg
+    thesis-type: PhD thesis
+    year: 2006
+  - type: book
+    title: "Ilkhanidische Stalaktitengewölbe: Beiträge zu Entwurf und Bautechnik"
+    authors:
+      - family-names: Harb
+        given-names: Ulrich
+    publisher:
+      name: Dietrich Reimer
+    year: 1978
+    notes: >-
+      The primary attribution for the corner-starting reading staged here; not
+      consulted directly, and known to this project through Harmsen (2006) and
+      Dold-Samplonius & Harmsen (2005).

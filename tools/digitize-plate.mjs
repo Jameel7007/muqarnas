@@ -15,20 +15,53 @@
  * positive quadrant, the outer walls are X = 12 and Y = 12, and the plate's
  * symmetry diagonal is Y = X.
  *
- * Usage: node tools/digitize-plate.mjs <page120.svg> <out.ts>
+ * Usage: node tools/digitize-plate.mjs <page120.svg|segments.json> <out.ts>
+ *
+ * Given the SVG it also writes docs/data/takht-plate-segments.json, the
+ * lattice-snapped input; given that JSON it reproduces the placements with no
+ * scan present, which is what makes the generated data file verifiable.
  */
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 
 const SQ2H = Math.SQRT2 / 2;
 const EPS = 1e-6;
 
 const [, , svgPath, outPath] = process.argv;
 if (!svgPath || !outPath) {
-  console.error('usage: digitize-plate.mjs <page120.svg> <out.ts>');
+  console.error('usage: digitize-plate.mjs <page120.svg|segments.json> <out.ts>');
   process.exit(1);
 }
-const svg = readFileSync(svgPath, 'utf8');
+const fromSegments = svgPath.endsWith('.json');
+const svg = fromSegments ? '' : readFileSync(svgPath, 'utf8');
+
+/* The committed provenance file: the lattice-snapped segments this tool
+   produced from the figure. Publishing it closes the chain — the generated
+   placements can be reproduced from it without the scan, which stays local. */
+const SEGMENTS_OUT = new URL('../docs/data/takht-plate-segments.json', import.meta.url).pathname;
+
+/* lattice-pair vertex helpers, shared by both input paths */
+const val = (a, b) => a + b * SQ2H;
+const pkey = (p) => `${p.xa},${p.xb}|${p.ya},${p.yb}`;
+const verts = new Map();
+const addVert = (p) => {
+  const k = pkey(p);
+  if (!verts.has(k)) verts.set(k, p);
+  return verts.get(k);
+};
+const px = (p) => val(p.xa, p.xb);
+const py = (p) => val(p.ya, p.yb);
+
+let snapped;
+if (fromSegments) {
+  const doc = JSON.parse(readFileSync(svgPath, 'utf8'));
+  snapped = doc.segments.map((q) => [
+    addVert({ xa: q[0], xb: q[1], ya: q[2], yb: q[3] }),
+    addVert({ xa: q[4], xb: q[5], ya: q[6], yb: q[7] }),
+  ]);
+  console.log(`segments from ${svgPath}: ${snapped.length}; vertices: ${verts.size}`);
+} else {
 
 /* ---------- 1. collect stroked black line segments ---------- */
 
@@ -105,19 +138,35 @@ const snapPt = (p) => {
   const sy = snap1(uy);
   return { xa: sx.a, xb: sx.b, ya: sy.a, yb: sy.b };
 };
-const val = (a, b) => a + b * SQ2H;
-const px = (p) => val(p.xa, p.xb);
-const py = (p) => val(p.ya, p.yb);
-const pkey = (p) => `${p.xa},${p.xb}|${p.ya},${p.yb}`;
-
-const verts = new Map();
-const addVert = (p) => {
-  const k = pkey(p);
-  if (!verts.has(k)) verts.set(k, p);
-  return verts.get(k);
-};
-let snapped = segs.map(([a, b]) => [addVert(snapPt(a)), addVert(snapPt(b))]).filter(([a, b]) => pkey(a) !== pkey(b));
+snapped = segs.map(([a, b]) => [addVert(snapPt(a)), addVert(snapPt(b))]).filter(([a, b]) => pkey(a) !== pkey(b));
 console.log(`worst snap residual: ${worstResidual.toFixed(4)} units; vertices: ${verts.size}`);
+
+  mkdirSync(dirname(SEGMENTS_OUT), { recursive: true });
+  writeFileSync(
+    SEGMENTS_OUT,
+    JSON.stringify(
+      {
+        note:
+          'Lattice-snapped line segments of the Takht-i Sulayman plate quarter plan, ' +
+          'extracted by tools/digitize-plate.mjs from the vector line work of Harmsen ' +
+          'diss. Heidelberg (2006) fig. 5.17(a). Each entry is a segment as two lattice ' +
+          'points [xa, xb, ya, yb, xa2, xb2, ya2, yb2], where a coordinate is the exact ' +
+          'value a + b*(sqrt(2)/2) in modules. The vault centre is the origin, the ' +
+          'quarter lies in the positive quadrant, outer walls at X = 12 and Y = 12, and ' +
+          'the symmetry diagonal is Y = X. These are measurements, not the figure: they ' +
+          'exist so packages/plan/src/takht-plate-data.ts can be regenerated without the ' +
+          'scan, which is never committed. Regenerate the placements with: ' +
+          'node tools/digitize-plate.mjs docs/data/takht-plate-segments.json ' +
+          'packages/plan/src/takht-plate-data.ts',
+        lattice: 'a + b*(sqrt(2)/2)',
+        segments: snapped.map((q) => [q[0].xa, q[0].xb, q[0].ya, q[0].yb, q[1].xa, q[1].xb, q[1].ya, q[1].yb]),
+      },
+      null,
+      0,
+    ) + '\n',
+  );
+  console.log(`wrote ${SEGMENTS_OUT} (${snapped.length} segments)`);
+}
 
 /* ---------- 4b. de-stretch the semi-regular band ----------
  *

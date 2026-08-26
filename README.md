@@ -3,6 +3,13 @@
 <p align="center"><strong>The vault from its plan</strong></p>
 
 <p align="center">
+  <a href="https://github.com/Jameel7007/muqarnas/actions/workflows/ci.yml"><img src="https://github.com/Jameel7007/muqarnas/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/code-MIT-blue.svg" alt="Code: MIT" /></a>
+  <a href="LICENSE-CONTENT"><img src="https://img.shields.io/badge/content-CC%20BY%204.0-lightgrey.svg" alt="Content: CC BY 4.0" /></a>
+  <a href="CITATION.cff"><img src="https://img.shields.io/badge/cite-CITATION.cff-green.svg" alt="Citation file" /></a>
+</p>
+
+<p align="center">
   A computational reconstruction of a thirteenth-century muqarnas vault from its
   two-dimensional plan.
 </p>
@@ -35,8 +42,12 @@ vaults from the same projection in a scroll-driven Three.js/WebGPU experience.
 
 ## What makes this different
 
-This is not a traced 3D model. The plan is constructed computationally from a
-historical element alphabet using exact arithmetic over ℚ(√2). Its regularized
+No geometry is traced: every element is constructed computationally from a
+historical alphabet using exact arithmetic over ℚ(√2). The Takht-i Sulaymān
+plate's *arrangement* — which element sits where, at what orientation — is
+digitized from the vector line work of Harmsen's fig. 5.17(a) and regularized
+onto the lattice, then stored as kind + isometry rather than as vertices, so the
+library still constructs every outline itself. The regularized
 quarter contains 157 elements; four rotations and four seam diamonds produce the
 632-element full plan. Tiling closure and projection identity are therefore tested
 with equality rather than epsilon tolerances.
@@ -93,9 +104,33 @@ small discrepancy in the manuscript value are documented in the
 | [`packages/scenes`](packages/scenes) | GSAP ScrollTrigger choreography and transitions |
 | [`site`](site) | The public piece and inspection harnesses |
 
-The full build argument lives in [`docs/SPEC.md`](docs/SPEC.md); primary and
-secondary sources are listed in [`docs/SOURCES.md`](docs/SOURCES.md). Source scans
-remain local and are never committed.
+Primary and secondary sources are listed in [`docs/SOURCES.md`](docs/SOURCES.md).
+[`docs/SPEC.md`](docs/SPEC.md) is the original build brief, kept as written and
+dated; where the shipped work diverges from it, the repository is authoritative.
+
+## Provenance and reproducibility
+
+Source scans stay local and are never committed. So that the one digitized
+input remains checkable, the lattice-snapped line segments the digitizer read
+are published as [`docs/data/takht-plate-segments.json`](docs/data/takht-plate-segments.json)
+— exact `a + b·(√2/2)` coordinates, measurements rather than the figure itself.
+The generated placements can therefore be regenerated with no scan present:
+
+```bash
+node tools/digitize-plate.mjs docs/data/takht-plate-segments.json \
+  packages/plan/src/takht-plate-data.ts
+```
+
+CI runs exactly this on every push and fails if the result differs by a byte,
+so the published provenance cannot drift from the data the site is built from.
+
+## Licence and citation
+
+The code is [MIT](LICENSE). The writing, visuals, and data are
+[CC BY 4.0](LICENSE-CONTENT). If you use the reconstruction or its findings,
+please cite it — [`CITATION.cff`](CITATION.cff) has the metadata, and GitHub's
+“Cite this repository” button will format it for you. The scholarship this work
+builds on belongs to its authors and is cited in `docs/SOURCES.md`.
 
 ## Run locally
 

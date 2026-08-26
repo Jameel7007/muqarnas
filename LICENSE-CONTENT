@@ -1,0 +1,33 @@
+Creative Commons Attribution 4.0 International (CC BY 4.0)
+
+Copyright (c) 2026 Muhammad Jameel
+
+The SOFTWARE in this repository is licensed under the MIT License; see LICENSE.
+
+This file covers the CONTENT: the prose of the site and the documentation
+(README.md, docs/, site/index.html, site/about.html and the scene captions),
+the reconstruction's scholarly notes, and the rendered imagery in docs/media.
+
+You are free to share and adapt this content for any purpose, including
+commercially, provided you give appropriate credit, link to this license, and
+indicate if changes were made.
+
+  This work is licensed under the Creative Commons Attribution 4.0
+  International License. To view a copy of this license, visit
+  https://creativecommons.org/licenses/by/4.0/
+
+Suggested attribution:
+
+  Muhammad Jameel, "Muqarnas: the vault from its plan" (2026),
+  https://jameel7007.github.io/muqarnas/ — CC BY 4.0
+
+WHAT THIS LICENCE DOES NOT COVER
+
+The scholarship this reconstruction is built on belongs to its authors and is
+cited in docs/SOURCES.md. In particular, the element arrangement of the
+Takht-i Sulaymān plate was digitized from the vector line work of Harmsen,
+"Algorithmic Computer Reconstructions of Stalactite Vaults" (diss. Heidelberg,
+2006), fig. 5.17(a). The lattice-snapped coordinates in
+docs/data/takht-plate-segments.json are measurements published here so the
+generated placements can be verified; the underlying figure, and the source
+scans generally, are not part of this repository and are not licensed by it.
