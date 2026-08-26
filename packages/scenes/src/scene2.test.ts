@@ -35,16 +35,26 @@ describe('scene 2 — the measure', () => {
 
   it('draws the tracer over the same endpoints as the profile ink', () => {
     const o = makeScene2Objects();
-    const pos = (l: typeof o.tracer) => l.geometry.getAttribute('position');
-    const t = pos(o.tracer);
-    const pk = pos(o.profileInk);
+    const endpoints = (l: typeof o.tracer) => {
+      const pos = l.geometry.getAttribute('position');
+      const copies = Number(l.userData.inkStrokeCopies ?? 1);
+      const centre = Math.floor(copies / 2);
+      const first = 2 * centre;
+      const last = pos.count - 2 * copies + 2 * centre + 1;
+      return {
+        first: [pos.getX(first), pos.getZ(first)],
+        last: [pos.getX(last), pos.getZ(last)],
+      };
+    };
+    const t = endpoints(o.tracer);
+    const pk = endpoints(o.profileInk);
     // both begin at the base of the facet…
-    expect([t.getX(0), t.getZ(0)]).toEqual([0, 0]);
-    expect([pk.getX(0), pk.getZ(0)]).toEqual([0, 0]);
+    expect(t.first).toEqual([0, 0]);
+    expect(pk.first).toEqual([0, 0]);
     // …and end on the top corner over the apex, A = (1, 2)
-    expect(t.getX(t.count - 1)).toBeCloseTo(1, 9);
-    expect(t.getZ(t.count - 1)).toBeCloseTo(2, 9);
-    expect(pk.getX(pk.count - 1)).toBeCloseTo(1, 9);
-    expect(pk.getZ(pk.count - 1)).toBeCloseTo(2, 9);
+    expect(t.last[0]).toBeCloseTo(1, 9);
+    expect(t.last[1]).toBeCloseTo(2, 9);
+    expect(pk.last[0]).toBeCloseTo(1, 9);
+    expect(pk.last[1]).toBeCloseTo(2, 9);
   });
 });

@@ -53,6 +53,7 @@ export interface Scene2Dom {
 const DIM = 0.42;
 const BRIGHT = 0.95;
 const TRACER_SAMPLES = 140;
+const DRAWING_INK = { plane: 'xz', weight: 0.004, maxSegmentLength: 0.035 } as const;
 
 /** Sexagesimal with fixed two-digit places so the count doesn't jitter. */
 export function toSexagesimal(v: number, places = 4): string {
@@ -81,7 +82,7 @@ export function makeScene2Objects(): Scene2Objects {
 
   const group = new Group();
   const add = (coords: number[], opacity: number) => {
-    const lines = inkLines(coords, opacity);
+    const lines = inkLines(coords, opacity, DRAWING_INK);
     drawOn(lines, 0);
     group.add(lines);
     return lines;

@@ -90,10 +90,14 @@ describe('scene 3 — the alphabet', () => {
   it('keeps every outline a closed loop', () => {
     for (const piece of objects.pieces.filter((p) => p.move)) {
       const pos = piece.outline.geometry.getAttribute('position');
+      const copies = Number(piece.outline.userData.inkStrokeCopies ?? 1);
+      const centre = Math.floor(copies / 2);
+      const first = 2 * centre;
+      const last = pos.count - 2 * copies + 2 * centre + 1;
       // consecutive strokes chain, and the last returns to the first
-      expect([pos.getX(0), pos.getY(0)]).toEqual([
-        pos.getX(pos.count - 1),
-        pos.getY(pos.count - 1),
+      expect([pos.getX(first), pos.getY(first)]).toEqual([
+        pos.getX(last),
+        pos.getY(last),
       ]);
     }
   });

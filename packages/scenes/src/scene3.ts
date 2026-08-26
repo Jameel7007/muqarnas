@@ -61,6 +61,7 @@ const BRIGHT = 0.9;
 const DIM = 0.42;
 const MARK = 0.75;
 const Z = 0.03;
+const DRAWING_INK = { plane: 'xy', weight: 0.004, maxSegmentLength: 0.04 } as const;
 
 type XY = readonly [number, number];
 
@@ -200,11 +201,11 @@ export function makeScene3Objects(plan: Plan): Scene3Objects & { pieces: Piece[]
     markDef?: ElementDef,
   ): Piece => {
     const g = new Group();
-    const outline = inkLines(loopCoords(verts), base);
+    const outline = inkLines(loopCoords(verts), base, DRAWING_INK);
     g.add(outline);
     let marks: LineSegments | undefined;
     if (markDef) {
-      marks = inkLines(markCoords(markDef), MARK);
+      marks = inkLines(markCoords(markDef), MARK, DRAWING_INK);
       drawOn(marks, 0);
       g.add(marks);
     }
@@ -215,7 +216,7 @@ export function makeScene3Objects(plan: Plan): Scene3Objects & { pieces: Piece[]
   };
 
   const stroke = (pts: XY[], way: Way[], draw: readonly [number, number], parent: Piece): void => {
-    const ink = inkLines(strokeCoords(pts), DIM);
+    const ink = inkLines(strokeCoords(pts), DIM, DRAWING_INK);
     parent.group.add(ink);
     pieces.push({
       group: parent.group,
@@ -340,7 +341,7 @@ export function makeScene3Objects(plan: Plan): Scene3Objects & { pieces: Piece[]
   for (let i = 0; i < patch.coords.length; i += 3) {
     shifted.push(patch.coords[i]! - patchCenter[0] + 0, patch.coords[i + 1]! - patchCenter[1] + 1.3, Z);
   }
-  const fragment = inkLines(shifted, 0.8);
+  const fragment = inkLines(shifted, 0.8, DRAWING_INK);
   drawOn(fragment, 0);
   group.add(fragment);
 
