@@ -9,7 +9,6 @@ import {
   max,
   mix,
   mx_noise_float,
-  normalViewGeometry,
   positionWorld,
   pow,
   smoothstep,
@@ -65,16 +64,18 @@ export function plasterMaterial(opts: PlasterOptions = {}): MeshStandardNodeMate
   const material = new MeshStandardNodeMaterial();
   material.metalness = 0;
   material.side = DoubleSide; // the profile view sees the extrados too
-  // A plate is lit by the face it WEARS, not the face you happen to see.
-  // The roofs' true normals point into the room (the lift flips the winding
-  // toward the intrados) and the key sits BELOW the horizon, so a plate
-  // shaded by three's auto-flipped back-face normal receives no sun at all.
-  // While the plan lies flat that reads as dark plates; the instant a plate
-  // tilts past the eye it flips front-facing all at once and pops from dark
-  // to fully lit in a single frame — measured at ~0.37 against a mean plate
-  // brightness of 0.13. Shading from the unflipped normal makes brightness
-  // invariant under the flip, so the pop cannot occur, in any scene.
-  material.normalNode = normalViewGeometry;
+  // DO NOT set material.normalNode to the unflipped normal here.
+  //
+  // It was tried, to cure the plates' dark/light pop: with DoubleSide and a
+  // key below the horizon, a plate flips shading the instant its plane
+  // crosses the eye. Shading from normalViewGeometry does make brightness
+  // invariant under that flip — but three derives the SHADOW lookup from the
+  // same normal, `shadowPositionWorld.add(normalWorld.mul(normalBias))`, so
+  // on every back face the bias then pushes the sample INTO the surface
+  // instead of off it. The result is stair-stepped shadow acne wherever a
+  // back face is lit at a grazing angle — scene I's room worst of all.
+  // Curing the pop needs a lighting model with a two-sided diffuse term,
+  // not a normal override.
 
   const ao = attribute('ao', 'float');
   const paint = attribute('paint', 'float');
