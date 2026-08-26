@@ -99,10 +99,31 @@ const relative = new Vector3();
 const childBounds = new Box3();
 
 /**
+ * A view from beneath is not a portrait. A muqarnas hangs over an opening,
+ * and the camera under that opening is meant to be INSIDE the work, with
+ * the cells overflowing the frame — the view the whole lighting language
+ * exists for. Retreating until the entire vault sat in frame would turn
+ * the piece's one immersive shot into a distant object shot, so a camera
+ * below the bounds and within their footprint keeps its authored stance.
+ * Exterior shots, including the overhead plan views, still fit. (World z
+ * is up throughout this project; the stage sets camera.up to +z.)
+ */
+function isInteriorView(camera: PerspectiveCamera, bounds: Box3): boolean {
+  const { x, y, z } = camera.position;
+  return (
+    z < bounds.min.z &&
+    x >= bounds.min.x &&
+    x <= bounds.max.x &&
+    y >= bounds.min.y &&
+    y <= bounds.max.y
+  );
+}
+
+/**
  * Move the camera backward along its authored sightline just far enough to
  * keep an axis-aligned box inside the current perspective frustum. The
- * target and shot direction do not change, and already-safe shots are left
- * untouched.
+ * target and shot direction do not change, and already-safe shots — and
+ * deliberate interior views — are left untouched.
  */
 export function fitCameraToBox(
   camera: PerspectiveCamera,
@@ -111,6 +132,7 @@ export function fitCameraToBox(
   padding = CAMERA_FRAME_PADDING,
 ): number {
   if (bounds.isEmpty()) return 0;
+  if (isInteriorView(camera, bounds)) return 0;
 
   direction.copy(target).sub(camera.position);
   if (direction.lengthSq() < 1e-12) return 0;

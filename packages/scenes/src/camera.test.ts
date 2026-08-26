@@ -91,6 +91,30 @@ describe('responsive camera framing', () => {
     }
   });
 
+  it('leaves a view from beneath the opening immersive', () => {
+    // the vault hangs over an opening; the camera under its footprint is
+    // inside the work, and the cells are meant to overflow the frame
+    const camera = new PerspectiveCamera(44, 16 / 9, 0.1, 500);
+    camera.up.set(0, 0, 1);
+    camera.position.set(0.5, -2.5, -16);
+    const before = camera.position.clone();
+    const bounds = new Box3(new Vector3(-11.9, -11.9, 0), new Vector3(11.9, 11.9, 34));
+
+    expect(fitCameraToBox(camera, new Vector3(0, 0, 20), bounds)).toBe(0);
+    expect(camera.position).toEqual(before);
+  });
+
+  it('still fits the overhead plan view, which is an exterior shot', () => {
+    const camera = new PerspectiveCamera(44, 16 / 9, 0.1, 500);
+    camera.up.set(0, 0, 1);
+    camera.position.set(0, -6, 40);
+    const bounds = new Box3(new Vector3(-11.9, -11.9, 0), new Vector3(11.9, 11.9, 34));
+
+    // directly above the footprint, but outside the object: the whole
+    // drawing must be in frame
+    expect(fitCameraToBox(camera, new Vector3(0, 0, 0), bounds)).toBeGreaterThan(0);
+  });
+
   it('does not move an authored camera that already has safe clearance', () => {
     const camera = new PerspectiveCamera(44, 16 / 9, 0.1, 500);
     camera.up.set(0, 0, 1);
