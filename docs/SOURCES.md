@@ -59,7 +59,8 @@ local sources directory (`extraction-notes.md`).
   committed as `docs/data/takht-plate-segments.json`, so the generated
   `takht-plate-data.ts` can be reproduced without the scan — exact cover verified, area exactly
   61 + 47√2, symmetric about the diagonal. Two documented departures:
-  (1) regularization — the incised design hides a misfit of Δ = 5 − 3.5√2
+  (1) regularization (written up in `docs/notes/plate-misfit.md`) — the incised
+  design hides a misfit of Δ = 5 − 3.5√2
   ≈ 0.0503 modules (≈ 1.8 mm on the plate) in a bent band of semi-regular
   quadrangles through the central star; the regular field is 7 + 3.5√2, not
   12, and the excavated unit-regular cells argue the vault used the regular

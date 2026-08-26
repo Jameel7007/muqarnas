@@ -32,6 +32,11 @@ keywords:
 license:
   - MIT
   - CC-BY-4.0
+identifiers:
+  - type: url
+    value: "https://github.com/Jameel7007/muqarnas/blob/main/docs/notes/plate-misfit.md"
+    description: >-
+      Note: A misfit of 5 − 3.5√2 in the Takht-i Sulaymān muqarnas plate.
 repository-code: "https://github.com/Jameel7007/muqarnas"
 url: "https://jameel7007.github.io/muqarnas/"
 references:

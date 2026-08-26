@@ -108,6 +108,19 @@ Primary and secondary sources are listed in [`docs/SOURCES.md`](docs/SOURCES.md)
 [`docs/SPEC.md`](docs/SPEC.md) is the original build brief, kept as written and
 dated; where the shipped work diverges from it, the repository is authoritative.
 
+## Findings
+
+The digitization produced one result worth stating on its own. Taken as regular
+elements, the plate's quarter design spans exactly **7 + 3.5√2 ≈ 11.9497
+modules**, while its drawn field is an integer **12**. The semi-regular figures
+that Dold-Samplonius and Harmsen noted along the diagonal therefore absorb
+exactly **Δ = 5 − 3.5√2 ≈ 0.0503 modules — about 1.8 mm** at the plate's 3.5 cm
+module. The irregularity is not free-hand error: 29 of 156 faces resist
+classification as regular elements, and shortening one band by exactly Δ
+resolves 28 of them.
+
+→ [**A misfit of 5 − 3.5√2 in the Takht-i Sulaymān plate**](docs/notes/plate-misfit.md)
+
 ## Provenance and reproducibility
 
 Source scans stay local and are never committed. So that the one digitized
