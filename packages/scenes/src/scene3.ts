@@ -18,7 +18,7 @@ import {
   sampleCameraPath,
   type CameraKey,
 } from './camera.js';
-import { drawOn, inkLines, inkOpacity, smooth, span } from './ink.js';
+import { drawOn, hairlineWeight, inkLines, inkOpacity, smooth, span } from './ink.js';
 
 /**
  * SCENE 3 — THE ALPHABET. The letters.
@@ -61,7 +61,10 @@ const BRIGHT = 0.9;
 const DIM = 0.42;
 const MARK = 0.75;
 const Z = 0.03;
-const DRAWING_INK = { plane: 'xy', weight: 0.004, maxSegmentLength: 0.04 } as const;
+// the stroke bundle is resolved per device at construction; on a monitor
+// it is a single hairline, as drawn
+const DRAWING_INK = { plane: 'xy', maxSegmentLength: 0.04 } as const;
+const HAIRLINE = 0.004;
 
 type XY = readonly [number, number];
 
@@ -173,6 +176,7 @@ const rowSlot = (i: number): XY => [-5.53 + 1.58 * i, ROW_Y];
 export function makeScene3Objects(plan: Plan): Scene3Objects & { pieces: Piece[] } {
   const group = new Group();
   const pieces: Piece[] = [];
+  const inkOptions = { ...DRAWING_INK, weight: hairlineWeight(HAIRLINE) };
 
   const sq = square();
   const rh = rhombus();
@@ -201,11 +205,11 @@ export function makeScene3Objects(plan: Plan): Scene3Objects & { pieces: Piece[]
     markDef?: ElementDef,
   ): Piece => {
     const g = new Group();
-    const outline = inkLines(loopCoords(verts), base, DRAWING_INK);
+    const outline = inkLines(loopCoords(verts), base, inkOptions);
     g.add(outline);
     let marks: LineSegments | undefined;
     if (markDef) {
-      marks = inkLines(markCoords(markDef), MARK, DRAWING_INK);
+      marks = inkLines(markCoords(markDef), MARK, inkOptions);
       drawOn(marks, 0);
       g.add(marks);
     }
@@ -216,7 +220,7 @@ export function makeScene3Objects(plan: Plan): Scene3Objects & { pieces: Piece[]
   };
 
   const stroke = (pts: XY[], way: Way[], draw: readonly [number, number], parent: Piece): void => {
-    const ink = inkLines(strokeCoords(pts), DIM, DRAWING_INK);
+    const ink = inkLines(strokeCoords(pts), DIM, inkOptions);
     parent.group.add(ink);
     pieces.push({
       group: parent.group,
@@ -341,7 +345,7 @@ export function makeScene3Objects(plan: Plan): Scene3Objects & { pieces: Piece[]
   for (let i = 0; i < patch.coords.length; i += 3) {
     shifted.push(patch.coords[i]! - patchCenter[0] + 0, patch.coords[i + 1]! - patchCenter[1] + 1.3, Z);
   }
-  const fragment = inkLines(shifted, 0.8, DRAWING_INK);
+  const fragment = inkLines(shifted, 0.8, inkOptions);
   drawOn(fragment, 0);
   group.add(fragment);
 

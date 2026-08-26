@@ -1,5 +1,44 @@
-import { describe, expect, it } from 'vitest';
-import { drawOn, inkLines } from './ink.js';
+import { afterEach, describe, expect, it } from 'vitest';
+import { drawOn, hairlineWeight, inkLines } from './ink.js';
+
+/**
+ * A GPU line is one physical pixel wide whatever the display, so the
+ * drawing scenes bundle their strokes on a phone and leave them a single
+ * hairline on a monitor, where a bundle reads as a doubled line.
+ */
+describe('hairline weight', () => {
+  const globals = globalThis as { matchMedia?: unknown };
+  const original = Object.prototype.hasOwnProperty.call(globals, 'matchMedia')
+    ? globals.matchMedia
+    : undefined;
+  const stub = (matches: (query: string) => boolean) => {
+    globals.matchMedia = (query: string) => ({ matches: matches(query) });
+  };
+  afterEach(() => {
+    if (original === undefined) delete globals.matchMedia;
+    else globals.matchMedia = original;
+  });
+
+  it('is bare on a mouse-and-monitor display', () => {
+    stub(() => false);
+    expect(hairlineWeight(0.004)).toBe(0);
+  });
+
+  it('bundles on a touch screen, in any orientation', () => {
+    stub((q) => q.includes('pointer: coarse'));
+    expect(hairlineWeight(0.004)).toBe(0.004);
+  });
+
+  it('bundles on a narrow viewport', () => {
+    stub((q) => q.includes('max-width'));
+    expect(hairlineWeight(0.004)).toBe(0.004);
+  });
+
+  it('stays bare where no media query exists at all', () => {
+    delete globals.matchMedia;
+    expect(hairlineWeight(0.004)).toBe(0);
+  });
+});
 
 describe('drawn ink', () => {
   it('keeps the original one-segment representation by default', () => {

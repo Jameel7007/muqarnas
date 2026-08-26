@@ -2,7 +2,7 @@ import { Group, Vector3, type LineSegments } from 'three';
 import { COEFFICIENT_PER_MODULE, kashiProfile, type KashiProfile } from '@muqarnas/plan';
 import { LIGHTING, type VaultStage } from '@muqarnas/render';
 import { sampleCameraPath, type CameraKey } from './camera.js';
-import { drawOn, inkLines, inkOpacity, span } from './ink.js';
+import { drawOn, hairlineWeight, inkLines, inkOpacity, span } from './ink.js';
 
 /**
  * SCENE 2 — THE MODULE AND THE PROFILE. The measure.
@@ -53,7 +53,10 @@ export interface Scene2Dom {
 const DIM = 0.42;
 const BRIGHT = 0.95;
 const TRACER_SAMPLES = 140;
-const DRAWING_INK = { plane: 'xz', weight: 0.004, maxSegmentLength: 0.035 } as const;
+// the stroke bundle is resolved per device at construction; on a monitor
+// it is a single hairline, as drawn
+const DRAWING_INK = { plane: 'xz', maxSegmentLength: 0.035 } as const;
+const HAIRLINE = 0.004;
 
 /** Sexagesimal with fixed two-digit places so the count doesn't jitter. */
 export function toSexagesimal(v: number, places = 4): string {
@@ -81,8 +84,9 @@ export function makeScene2Objects(): Scene2Objects {
   const { cx, cz, r, a0, a1 } = profile.arc;
 
   const group = new Group();
+  const inkOptions = { ...DRAWING_INK, weight: hairlineWeight(HAIRLINE) };
   const add = (coords: number[], opacity: number) => {
-    const lines = inkLines(coords, opacity, DRAWING_INK);
+    const lines = inkLines(coords, opacity, inkOptions);
     drawOn(lines, 0);
     group.add(lines);
     return lines;

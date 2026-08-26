@@ -15,6 +15,21 @@ export const smooth = (t: number): number => {
 };
 export const span = (p: number, a: number, b: number): number => smooth((p - a) / (b - a));
 
+/**
+ * A line primitive is one PHYSICAL pixel wide however dense the display,
+ * so a hairline that reads cleanly on a desktop monitor nearly vanishes
+ * on a phone. The drawing scenes bundle their strokes into three parallel
+ * lines there — and only there: on a pointer display the same bundle
+ * reads as a doubled, smeared stroke rather than a heavier one, so a
+ * mouse-and-monitor viewer keeps the original single hairline.
+ */
+export function hairlineWeight(weight: number): number {
+  if (typeof matchMedia === 'undefined') return 0;
+  const touch = matchMedia('(pointer: coarse)').matches;
+  const narrow = matchMedia('(max-width: 640px)').matches;
+  return touch || narrow ? weight : 0;
+}
+
 export interface InkLineOptions {
   /** Plane in which the drawing lies; used to offset the parallel ink strokes. */
   readonly plane?: 'xy' | 'xz';
