@@ -33,6 +33,10 @@ license:
   - MIT
   - CC-BY-4.0
 identifiers:
+  # Add the Zenodo DOI here once the first release is archived:
+  # - type: doi
+  #   value: "10.5281/zenodo.XXXXXXX"
+  #   description: Archived release
   - type: url
     value: "https://github.com/Jameel7007/muqarnas/blob/main/docs/notes/plate-misfit.md"
     description: >-

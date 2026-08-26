@@ -21,6 +21,11 @@ paths below are deliberately relative rather than absolute.
    through Harmsen [4] ch. 5 and Dold-Samplonius & Harmsen [3]. Every statement here
    about "the reading Harb proposed" rests on their account of it, not on Harb's own
    text; anyone checking the attribution should go to [6] directly.
+   Citation checked against both secondary sources, which disagree: [3] n. 5 gives
+   "Archäologische Mitteilungen aus Iran, vol. 4 (Berlin: Dietrich Reimer, 1978)"
+   but misspells the title *Ilkhandische*; [4]'s bibliography has the title right
+   and the publisher wrong (*Dietrich Reiner*). The form above takes the correct
+   reading from each.
 
 Detailed extraction notes with page citations live beside the scans, in the
 local sources directory (`extraction-notes.md`).

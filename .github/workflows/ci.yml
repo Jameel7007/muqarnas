@@ -40,3 +40,9 @@ jobs:
 
       - name: Build the site
         run: npm run build
+
+      # The narration's counts are static in the HTML so the prose survives
+      # without JavaScript. This asserts the shipped page still agrees with the
+      # geometry, and that no placeholder went out empty.
+      - name: Narration counts match the geometry
+        run: npx tsx site/scripts/tallies.ts site/dist/index.html

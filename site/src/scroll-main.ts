@@ -18,6 +18,7 @@ import {
   vaultToGeometry,
   withPaintAttribute,
 } from '@muqarnas/render';
+import { createNavigation } from './navigation.js';
 import {
   BAKED_FILES,
   LIFT_OPTS,
@@ -48,6 +49,7 @@ import {
   makeScene3Objects,
   makeScene4Objects,
   makeScene9Objects,
+  prefersReducedMotion,
 } from '@muqarnas/scenes';
 
 /**
@@ -113,7 +115,10 @@ async function buildReadingLive(
 }
 
 async function main() {
-  const lenis = new Lenis({ autoRaf: false });
+  // a reader who asked for less motion gets the browser's own scrolling:
+  // Lenis's easing is page motion the piece adds on top of their gesture
+  const smooth = !prefersReducedMotion();
+  const lenis = new Lenis({ autoRaf: false, smoothWheel: smooth, syncTouch: false });
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add((time) => lenis.raf(time * 1000));
   gsap.ticker.lagSmoothing(0);
@@ -186,16 +191,8 @@ async function main() {
 
   const s9 = makeScene9Objects();
   stage.scene.add(s9.group);
-  el('#cap-4b-n').textContent = String(s4.quarterCount);
-  el('#cap-4d-n').textContent = String(plan.placed.length);
 
-  // the census, from the digitized plate itself
-  const tally = (kind: string) => plan.placed.filter((q) => q.def.kind === kind).length;
-  el('#cap-3d-total').textContent = String(plan.placed.length);
-  el('#cap-3d-sq').textContent = String(tally('square'));
-  el('#cap-3d-rh').textContent = String(tally('rhombus'));
-  el('#cap-3d-hr').textContent = String(tally('half-rhombus'));
-  el('#cap-3d-jug').textContent = String(tally('jug'));
+
 
   // each track shows only its scene's world — objects and captions — before
   // the scene runs, so the scenes' own toggles (mesh swaps, ink fades,
@@ -326,7 +323,6 @@ async function main() {
     stage,
     { captionA: el('#cap-6a'), captionB: el('#cap-6b'), captionC: el('#cap-6c') },
   );
-  el('#cap-6c-n').textContent = String(a.rig.maxTier);
   bindScrubbedScene(el('#scene6-track'), (p) => {
     if (narrativeSuspended) return;
     show(worlds.six);
@@ -532,6 +528,14 @@ async function main() {
   await new Promise<void>((resolve) =>
     window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve())),
   );
+
+  // the acts become addressable: stable hashes, a rail, and keys
+  const nav = createNavigation({
+    scrollTo: (target, immediate) =>
+      immediate ? lenis.scrollTo(target, { immediate: true }) : lenis.scrollTo(target, { duration: 1.1 }),
+  });
+  ScrollTrigger.refresh();
+  nav.openAtHash?.();
 
   document.querySelector('#loader')!.classList.add('done');
 }

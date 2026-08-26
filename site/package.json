@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 5175 --strictPort",
-    "build": "vite build",
+    "build": "npm run tallies && vite build",
     "prebake": "tsx scripts/prebake.ts",
     "preview": "vite preview --port 5175 --strictPort",
-    "deploy": "npm run prebake && vite build && gh-pages -d dist"
+    "deploy": "npm run prebake && npm run build && gh-pages -d dist",
+    "tallies": "tsx scripts/tallies.ts"
   },
   "dependencies": {
     "@muqarnas/lift": "*",
