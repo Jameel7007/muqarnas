@@ -280,6 +280,117 @@
           0 1px 14px rgba(10, 9, 6, 0.95),
           0 0 3px rgba(10, 9, 6, 0.85);
       }
+      /* the rail: hairlines at the edge, numerals only on approach */
+      #act-rail {
+        position: fixed;
+        top: 50%;
+        right: 0;
+        transform: translateY(-50%);
+        z-index: 4;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.55rem;
+        padding: 1rem 0.9rem 1rem 3rem;
+      }
+      .act-tick {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.55rem;
+        background: none;
+        border: 0;
+        padding: 0.15rem 0;
+        cursor: pointer;
+        color: var(--dim);
+        font: inherit;
+      }
+      .act-tick i {
+        display: block;
+        width: 0.7rem;
+        height: 1px;
+        background: currentColor;
+        opacity: 0.45;
+        transition:
+          width 0.35s ease,
+          opacity 0.35s ease;
+      }
+      .act-tick.is-current {
+        color: var(--accent);
+      }
+      .act-tick.is-current i {
+        width: 1.35rem;
+        opacity: 1;
+      }
+      .act-numeral {
+        font-size: 0.56rem;
+        letter-spacing: 0.24em;
+        font-variant-numeric: tabular-nums;
+        opacity: 0;
+        transform: translateX(0.35rem);
+        transition:
+          opacity 0.35s ease,
+          transform 0.35s ease;
+      }
+      #act-rail:hover .act-numeral,
+      #act-rail:focus-within .act-numeral {
+        opacity: 1;
+        transform: none;
+      }
+      .act-tick:hover i,
+      .act-tick:focus-visible i {
+        width: 1.35rem;
+        opacity: 1;
+      }
+      #skip-to-coda {
+        position: fixed;
+        top: 1.6rem;
+        left: 1.8rem;
+        z-index: 7;
+        font-family: Georgia, serif;
+        font-size: 0.62rem;
+        letter-spacing: 0.34em;
+        text-transform: uppercase;
+        color: var(--dim);
+        text-decoration: none;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s ease;
+      }
+      #skip-to-coda:focus,
+      #skip-to-coda:focus-visible {
+        opacity: 1;
+        pointer-events: auto;
+        color: var(--accent);
+        outline: 1px solid var(--accent);
+        outline-offset: 0.4rem;
+      }
+      html.free-look-open #act-rail,
+      html.free-look-open #skip-to-coda {
+        opacity: 0;
+        pointer-events: none;
+      }
+      @media (max-width: 640px) {
+        #act-rail {
+          gap: 0.4rem;
+          /* no wide hover gutter on a phone: there is no hover, and the
+             padding would put an invisible tap strip over the caption */
+          padding: 0.6rem 0.45rem;
+        }
+        .act-tick i {
+          width: 0.45rem;
+        }
+      }
+      /* numerals are a hover affordance; a touch pointer never sees them */
+      @media (hover: none) {
+        .act-numeral {
+          display: none;
+        }
+      }
+      .act-anchor {
+        position: absolute;
+        top: 0;
+      }
       /* the coda's light bar — the low sun, in the viewer's hands */
       #coda-panel {
         position: fixed;
@@ -452,7 +563,7 @@
         }
       }
     </style>
-    <script type="module" crossorigin src="/muqarnas/assets/main-wNECUNCj.js"></script>
+    <script type="module" crossorigin src="/muqarnas/assets/main-DZgI02bX.js"></script>
     <link rel="modulepreload" crossorigin href="/muqarnas/assets/solver-BibGwqpk.js">
     <link rel="modulepreload" crossorigin href="/muqarnas/assets/stage-ZbhAkEE1.js">
     <link rel="stylesheet" crossorigin href="/muqarnas/assets/solver-Dp4mz5J1.css">
@@ -467,6 +578,9 @@
       <span id="load-status">…</span>
     </div>
     <a id="about-link" href="about.html">about</a>
+    <a id="skip-to-coda" href="#coda">skip to the vault</a>
+
+    <nav id="act-rail" aria-label="Acts"></nav>
 
     <!-- the piece, for readers who hear it: the visual text layer below is
          scroll-choreographed opacity, meaningless read all at once, so it is
@@ -508,14 +622,14 @@
         III — the alphabet. Two seeds, the square and the forty-five-degree
         rhombus; their divisions and remainders give eight letters — halves, the
         jug, the almond, two bipeds. Cells wear roofs; bipeds only connect. The
-        full drawing spells the sky with 632 letters yet uses only four of the
+        full drawing spells the sky with <span data-tally="total">632</span> letters yet uses only four of the
         eight kinds.
       </p>
       <p>
         IV — the plan. The master rules frame, seams, and diagonals, and writes one
-        quarter from a corner in toward the crown — 157 letters in this
+        quarter from a corner in toward the crown — <span data-tally="quarter">157</span> letters in this
         digitisation's count. Symmetry turns it four times, four diamonds stitch
-        the seams, and the word is whole: 632.
+        the seams, and the word is whole: <span data-tally="total">632</span>.
       </p>
       <p>
         V — the lift. This is not a rosette; it is a building seen from above. The
@@ -632,10 +746,10 @@
       <span class="num">III</span>
       <p>Letters into words: the plate's own corner, where the readings this site
       raises begin. The
-      full drawing spells the sky with <span id="cap-3d-total">—</span> letters, yet
-      uses only four of the eight: <span id="cap-3d-sq">—</span> squares,
-      <span id="cap-3d-rh">—</span> rhombi, <span id="cap-3d-hr">—</span> half-rhombi,
-      and <span id="cap-3d-jug">—</span> jugs paired on the diagonals. No almond, no
+      full drawing spells the sky with <span id="cap-3d-total" data-tally="total">632</span> letters, yet
+      uses only four of the eight: <span id="cap-3d-sq" data-tally="squares">248</span> squares,
+      <span id="cap-3d-rh" data-tally="rhombi">360</span> rhombi, <span id="cap-3d-hr" data-tally="halfRhombi">16</span> half-rhombi,
+      and <span id="cap-3d-jug" data-tally="jugs">8</span> jugs paired on the diagonals. No almond, no
       biped — a word never needs the whole alphabet. That word is next.</p>
     </div>
 
@@ -646,7 +760,7 @@
     </div>
     <div class="scene-caption" id="cap-4b">
       <span class="num">IV</span>
-      <p>One quarter is enough to draw: <span id="cap-4b-n">—</span> letters, written
+      <p>One quarter is enough to draw: <span id="cap-4b-n" data-tally="quarter">157</span> letters, written
       from the corner in toward the crown — the same order the vault will be built in,
       because the outermost ring is the lowest tier.</p>
     </div>
@@ -659,7 +773,7 @@
     <div class="scene-caption" id="cap-4d">
       <span class="num">IV</span>
       <p>Four diamonds stitch the seams no quarter can hold, and the word is whole:
-      <span id="cap-4d-n">—</span> letters. Now it stops being a drawing.</p>
+      <span id="cap-4d-n" data-tally="total">632</span> letters. Now it stops being a drawing.</p>
     </div>
 
     <div class="scene-caption" id="cap-a">
@@ -685,7 +799,7 @@
     <div class="scene-caption" id="cap-6c">
       <span class="num">VI</span>
       <p>The crown closes to a ring, not a point — the plan was an annulus all along,
-      <span id="cap-6c-n">—</span> tiers to its rim. Stand beneath it: everything the
+      <span id="cap-6c-n" data-tally="tiers">17</span> tiers to its rim. Stand beneath it: everything the
       drawing knew is over your head.</p>
     </div>
 
@@ -736,27 +850,28 @@
     <span id="hint">scroll</span>
     </div>
 
-    <div class="track" id="intro-track"></div>
-    <div class="track" id="scene1-track"></div>
+    <div class="track" id="intro-track" data-act data-slug="intro" data-label="Introduction"><span class="act-anchor" id="intro" aria-hidden="true"></span></div>
+    <div class="track" id="scene1-track" data-act data-slug="i-square-and-circle" data-label="I — the square and the circle"><span class="act-anchor" id="i-square-and-circle" aria-hidden="true"></span></div>
     <div class="track runway cut"></div>
-    <div class="track" id="scene2-track"></div>
+    <div class="track" id="scene2-track" data-act data-slug="ii-the-module" data-label="II — the module"><span class="act-anchor" id="ii-the-module" aria-hidden="true"></span></div>
     <div class="track runway cut"></div>
-    <div class="track" id="scene3-track"></div>
+    <div class="track" id="scene3-track" data-act data-slug="iii-the-alphabet" data-label="III — the alphabet"><span class="act-anchor" id="iii-the-alphabet" aria-hidden="true"></span></div>
     <div class="track runway cut"></div>
-    <div class="track" id="scene4-track"></div>
+    <div class="track" id="scene4-track" data-act data-slug="iv-the-plan" data-label="IV — the plan"><span class="act-anchor" id="iv-the-plan" aria-hidden="true"></span></div>
     <div class="track runway cut"></div>
-    <div class="track" id="scene5-track"></div>
+    <div class="track" id="scene5-track" data-act data-slug="v-the-lift" data-label="V — the lift"><span class="act-anchor" id="v-the-lift" aria-hidden="true"></span></div>
     <div class="track runway"></div>
-    <div class="track" id="scene6-track"></div>
+    <div class="track" id="scene6-track" data-act data-slug="vi-tier-on-tier" data-label="VI — tier on tier"><span class="act-anchor" id="vi-tier-on-tier" aria-hidden="true"></span></div>
     <div class="track runway"></div>
-    <div class="track" id="scene7-track"></div>
+    <div class="track" id="scene7-track" data-act data-slug="vii-the-same-plan-twice" data-label="VII — the same plan, twice"><span class="act-anchor" id="vii-the-same-plan-twice" aria-hidden="true"></span></div>
     <div class="track runway cut"></div>
-    <div class="track" id="scene8-track"></div>
+    <div class="track" id="scene8-track" data-act data-slug="viii-the-day" data-label="VIII — the day"><span class="act-anchor" id="viii-the-day" aria-hidden="true"></span></div>
     <div class="track runway"></div>
-    <div class="track" id="scene9-track"></div>
+    <div class="track" id="scene9-track" data-act data-slug="ix-the-return" data-label="IX — the return"><span class="act-anchor" id="ix-the-return" aria-hidden="true"></span></div>
     <div class="track runway"></div>
 
-    <section class="track" id="explore-section" aria-labelledby="explore-title">
+    <section class="track" id="explore-section" data-act data-slug="coda" data-label="Coda — free look"
+      aria-labelledby="explore-title"><span class="act-anchor" id="coda" aria-hidden="true"></span>
       <div class="explore-intro">
         <span class="explore-kicker">after the return</span>
         <h2 id="explore-title">The vault, in your hands</h2>
