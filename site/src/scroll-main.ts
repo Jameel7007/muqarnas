@@ -231,7 +231,7 @@ async function main() {
       objects: [meshB, planLines, s9.group] as Object3D[],
       caps: caps('#cap-9a', '#cap-9b', '#cap-9c'),
     },
-    coda: { objects: [meshB] as Object3D[], caps: caps('#cap-10', '#coda-panel') },
+    explore: { objects: [meshB] as Object3D[], caps: [] as HTMLElement[] },
   };
   const everything = [s1.group, s2.group, s3.group, s4.group, meshA, meshB, planLines, s9.group];
   const allCaps = Object.values(worlds).flatMap((w) => w.caps);
@@ -246,6 +246,8 @@ async function main() {
       }
     }
   };
+  let narrativeSuspended = false;
+  let viewerOpen = false;
 
   const scene1 = createScene1(s1, stage, {
     captionA: el('#cap-1a'),
@@ -255,6 +257,7 @@ async function main() {
   // the frontispiece: title, definition, a breath of history — drifting
   // away as the first drawing begins
   bindScrubbedScene(el('#intro-track'), (p) => {
+    if (narrativeSuspended) return;
     const fade = 1 - Math.min(1, Math.max(0, (p - 0.12) / 0.55));
     const intro = el('#intro');
     intro.style.opacity = String(fade * fade * (3 - 2 * fade));
@@ -263,6 +266,7 @@ async function main() {
   });
 
   bindScrubbedScene(el('#scene1-track'), (p) => {
+    if (narrativeSuspended) return;
     show(worlds.one);
     scene1(p);
   });
@@ -275,6 +279,7 @@ async function main() {
     numerals: el('#cap-2c-num'),
   });
   bindScrubbedScene(el('#scene2-track'), (p) => {
+    if (narrativeSuspended) return;
     show(worlds.two);
     scene2(p);
   });
@@ -286,6 +291,7 @@ async function main() {
     captionD: el('#cap-3d'),
   });
   bindScrubbedScene(el('#scene3-track'), (p) => {
+    if (narrativeSuspended) return;
     show(worlds.three);
     scene3(p);
   });
@@ -297,6 +303,7 @@ async function main() {
     captionD: el('#cap-4d'),
   });
   bindScrubbedScene(el('#scene4-track'), (p) => {
+    if (narrativeSuspended) return;
     show(worlds.four);
     scene4(p);
   });
@@ -308,6 +315,7 @@ async function main() {
     { planLines },
   );
   bindScrubbedScene(el('#scene5-track'), (p) => {
+    if (narrativeSuspended) return;
     show(worlds.five);
     scene5(p);
   });
@@ -320,6 +328,7 @@ async function main() {
   );
   el('#cap-6c-n').textContent = String(a.rig.maxTier);
   bindScrubbedScene(el('#scene6-track'), (p) => {
+    if (narrativeSuspended) return;
     show(worlds.six);
     scene6(p);
   });
@@ -330,6 +339,7 @@ async function main() {
     { captionA: el('#cap-7a'), captionB: el('#cap-7b'), captionC: el('#cap-7c') },
   );
   bindScrubbedScene(el('#scene7-track'), (p) => {
+    if (narrativeSuspended) return;
     show(worlds.seven);
     scene7(p);
   });
@@ -340,6 +350,7 @@ async function main() {
     captionC: el('#cap-8c'),
   });
   bindScrubbedScene(el('#scene8-track'), (p) => {
+    if (narrativeSuspended) return;
     show(worlds.eight);
     scene8(p);
   });
@@ -350,24 +361,75 @@ async function main() {
     captionC: el('#cap-9c'),
   });
   bindScrubbedScene(el('#scene9-track'), (p) => {
+    if (narrativeSuspended) return;
     show(worlds.nine);
     stage.controls.enabled = false;
     scene9(p);
   });
 
-  // the coda: the vault in the viewer's hands — drag turns it, scroll
-  // still scrolls
+  // Free-look is deliberately outside the scroll narrative. The page ends
+  // at scene IX's point; a separate, explicit viewer then gives OrbitControls
+  // sole ownership of touch until the viewer is closed.
   const coda = createCoda({ rig: b.rig }, stage, {
-    caption: el('#cap-10'),
     hint: el('#drag-hint'),
     panel: el('#coda-panel'),
     light: el('#coda-light') as HTMLInputElement,
   });
-  bindScrubbedScene(el('#coda-track'), (p) => {
-    show(worlds.coda);
-    stage.controls.enabled = true;
-    coda(p);
+  const exploreSection = el('#explore-section');
+  const viewerUi = el('#viewer-ui');
+  const openViewerButton = el('#explore-open');
+  const closeViewerButton = el('#viewer-close');
+  let viewerCloseTimer: number | undefined;
+
+  const openViewer = () => {
+    if (viewerOpen) return;
+    viewerOpen = true;
+    narrativeSuspended = true;
+    if (viewerCloseTimer !== undefined) {
+      window.clearTimeout(viewerCloseTimer);
+      viewerCloseTimer = undefined;
+    }
+    show(worlds.explore);
+    coda.open();
+    lenis.stop();
+    document.documentElement.classList.add('free-look-open');
+    viewerUi.setAttribute('aria-hidden', 'false');
+    openViewerButton.setAttribute('aria-expanded', 'true');
+    window.requestAnimationFrame(() => {
+      exploreSection.classList.add('viewer-open');
+      closeViewerButton.focus({ preventScroll: true });
+    });
+  };
+
+  const closeViewer = () => {
+    if (!viewerOpen) return;
+    viewerOpen = false;
+    exploreSection.classList.remove('viewer-open');
+    viewerUi.setAttribute('aria-hidden', 'true');
+    openViewerButton.setAttribute('aria-expanded', 'false');
+    document.documentElement.classList.remove('free-look-open');
+    coda.close();
+    lenis.start();
+    openViewerButton.focus({ preventScroll: true });
+
+    // Let the opaque section close over the viewer before restoring scene
+    // IX's final point behind it. Reopening during the fade cancels this.
+    viewerCloseTimer = window.setTimeout(() => {
+      if (!viewerOpen) {
+        narrativeSuspended = false;
+        show(worlds.nine);
+        scene9(1);
+      }
+      viewerCloseTimer = undefined;
+    }, 850);
+  };
+
+  openViewerButton.addEventListener('click', openViewer);
+  closeViewerButton.addEventListener('click', closeViewer);
+  window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeViewer();
   });
+  coda.close();
 
   // a cross-dissolve across each hard chapter cut: the frozen outgoing
   // frame melts into the incoming scene, no black anywhere
@@ -452,7 +514,10 @@ async function main() {
   // ResizeObserver updates the camera projection after the browser's own
   // resize event. Settle once more from that exact point so framing and the
   // narrative position use the same final viewport.
-  stage.onResize(settleResize);
+  stage.onResize(() => {
+    settleResize();
+    coda.resize();
+  });
 
   // the page opens on scene 1's first frame regardless of bind order
   show(worlds.one);

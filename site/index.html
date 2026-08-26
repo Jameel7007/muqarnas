@@ -113,19 +113,121 @@
       #scene9-track {
         height: 620vh;
       }
-      #coda-track {
-        height: 500vh;
+      #explore-section {
+        min-height: 100svh;
+        position: relative;
+        z-index: 3;
+        pointer-events: auto;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        padding: 4rem 1.5rem;
+        background-color: var(--bg);
+        text-align: center;
+        transition: background-color 0.8s ease;
+      }
+      #explore-section.viewer-open {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        z-index: 5;
+        padding: 0;
+        pointer-events: none;
+        background-color: transparent;
+      }
+      .explore-intro {
+        width: min(38rem, calc(100vw - 3rem));
+        position: relative;
+        transition:
+          opacity 0.45s ease,
+          transform 0.65s ease;
+      }
+      .viewer-open .explore-intro {
+        opacity: 0;
+        transform: translateY(-1rem);
+        pointer-events: none;
+      }
+      .explore-kicker {
+        display: block;
+        margin-bottom: 1.1rem;
+        color: var(--accent);
+        font-size: 0.66rem;
+        letter-spacing: 0.48em;
+        text-transform: uppercase;
+      }
+      .explore-intro h2 {
+        margin: 0;
+        color: var(--ink);
+        font-family: 'Cormorant Garamond', Georgia, serif;
+        font-size: clamp(2.2rem, 7vw, 4.8rem);
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        line-height: 1;
+      }
+      .explore-intro p {
+        max-width: 31rem;
+        margin: 1.35rem auto 0;
+        color: var(--dim);
+        font-family: 'Cormorant Garamond', Georgia, serif;
+        font-size: 1.15rem;
+        font-style: italic;
+        line-height: 1.65;
+      }
+      #explore-open,
+      #viewer-close {
+        border: 1px solid rgba(183, 169, 127, 0.62);
+        background: rgba(20, 18, 14, 0.72);
+        color: var(--ink);
+        font: inherit;
+        font-size: 0.66rem;
+        letter-spacing: 0.34em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition:
+          border-color 0.35s ease,
+          background-color 0.35s ease,
+          color 0.35s ease;
+      }
+      #explore-open {
+        margin-top: 2rem;
+        padding: 0.85rem 1.35rem 0.85rem 1.65rem;
+      }
+      #explore-open:hover,
+      #viewer-close:hover {
+        border-color: var(--accent);
+        background: rgba(183, 169, 127, 0.12);
+        color: #fff8e8;
+      }
+      #viewer-ui {
+        position: fixed;
+        inset: 0;
+        z-index: 6;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.55s ease 0.2s;
+      }
+      .viewer-open #viewer-ui {
+        opacity: 1;
+      }
+      #viewer-close {
+        position: fixed;
+        top: max(1rem, env(safe-area-inset-top));
+        left: max(1rem, env(safe-area-inset-left));
+        padding: 0.65rem 0.8rem 0.65rem 1.05rem;
+        pointer-events: auto;
       }
       #drag-hint {
         position: fixed;
-        bottom: 2.2rem;
+        bottom: max(1.4rem, env(safe-area-inset-bottom));
         left: 50%;
         transform: translateX(-50%);
-        font-size: 0.68rem;
-        letter-spacing: 0.4em;
-        text-transform: uppercase;
         color: var(--dim);
-        z-index: 2;
+        font-size: 0.62rem;
+        letter-spacing: 0.34em;
+        text-transform: uppercase;
+        white-space: nowrap;
         opacity: 0;
         transition: opacity 0.6s ease;
         pointer-events: none;
@@ -183,12 +285,12 @@
         position: fixed;
         right: 2rem;
         bottom: 2.2rem;
-        z-index: 3;
         opacity: 0;
         pointer-events: none;
         display: flex;
         align-items: center;
         gap: 0.8rem;
+        transition: opacity 0.55s ease;
       }
       #coda-panel label {
         font-size: 0.62rem;
@@ -204,10 +306,14 @@
       @media (max-width: 640px) {
         #coda-panel {
           right: 1rem;
-          bottom: 4.8rem;
+          bottom: calc(max(4.4rem, env(safe-area-inset-bottom) + 3.5rem));
         }
         #coda-panel input {
           width: 7rem;
+        }
+        #drag-hint {
+          font-size: 0.56rem;
+          letter-spacing: 0.25em;
         }
       }
       @media (max-width: 640px) {
@@ -251,10 +357,21 @@
         text-transform: uppercase;
         color: var(--dim);
         text-decoration: none;
-        transition: color 0.4s ease;
+        transition:
+          color 0.4s ease,
+          opacity 0.35s ease;
       }
       #about-link:hover {
         color: var(--accent);
+      }
+      html.free-look-open,
+      html.free-look-open body {
+        overflow: hidden;
+        overscroll-behavior: none;
+      }
+      html.free-look-open #about-link {
+        opacity: 0;
+        pointer-events: none;
       }
       #loader {
         position: fixed;
@@ -425,10 +542,12 @@
         Everything here grew out of this, and goes back into it. Good night.
       </p>
       <p>
-        Coda — the vault is yours: on a pointer device, drag to turn it from any
-        side, and from beneath, where it was always meant to be seen; pinch or
-        ctrl-scroll zooms, and a slider walks the low light around the horizon.
-        A fuller scholarly account, with sources, is on the about page.
+        After the return, a separate free-look viewer presents the completed
+        reconstruction as an object rather than another scroll scene. Activate
+        the viewer, then drag to turn the vault from any side and from beneath;
+        pinch or ctrl-scroll zooms, a slider walks the low light around the
+        horizon, and a close control returns to the page. A fuller scholarly
+        account, with sources, is on the about page.
       </p>
     </section>
 
@@ -610,26 +729,7 @@
       <p>Into the module. Into the point it was struck from. Everything here grew out
       of this, and goes back into it. Good night.</p>
     </div>
-    <div class="scene-caption" id="cap-10">
-      <span class="num">coda — in your hands</span>
-      <p>The vault is yours now. Drag to turn it — from any side, and from beneath,
-      where it was always meant to be seen.</p>
-    </div>
     <span id="hint">scroll</span>
-    <span id="drag-hint">drag to turn · pinch to zoom</span>
-    </div>
-
-    <div id="coda-panel">
-      <label for="coda-light">light</label>
-      <input
-        id="coda-light"
-        type="range"
-        min="0"
-        max="360"
-        step="1"
-        value="35"
-        aria-label="Light direction, degrees around the horizon"
-      />
     </div>
 
     <div class="track" id="intro-track"></div>
@@ -650,9 +750,38 @@
     <div class="track" id="scene8-track"></div>
     <div class="track runway"></div>
     <div class="track" id="scene9-track"></div>
-    <div class="track runway cut"></div>
-    <div class="track" id="coda-track"></div>
     <div class="track runway"></div>
+
+    <section class="track" id="explore-section" aria-labelledby="explore-title">
+      <div class="explore-intro">
+        <span class="explore-kicker">after the return</span>
+        <h2 id="explore-title">The vault, in your hands</h2>
+        <p>
+          The story ends at the point. The reconstruction remains here as an object:
+          complete, turnable, and lit from any hour.
+        </p>
+        <button id="explore-open" type="button" aria-controls="viewer-ui" aria-expanded="false">
+          Enter free look
+        </button>
+      </div>
+
+      <div id="viewer-ui" aria-hidden="true">
+        <button id="viewer-close" type="button" aria-label="Close free-look viewer">close</button>
+        <span id="drag-hint">drag to turn · pinch to zoom</span>
+        <div id="coda-panel">
+          <label for="coda-light">light</label>
+          <input
+            id="coda-light"
+            type="range"
+            min="0"
+            max="360"
+            step="1"
+            value="35"
+            aria-label="Light direction, degrees around the horizon"
+          />
+        </div>
+      </div>
+    </section>
 
     <canvas id="dissolve" aria-hidden="true"></canvas>
   </body>

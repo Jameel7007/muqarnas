@@ -12,7 +12,6 @@ import { createScene7 } from './scene7.js';
 import { createScene8 } from './scene8.js';
 import { createScene5 } from './scene5.js';
 import { createScene9, makeScene9Objects } from './scene9.js';
-import { createCoda } from './coda.js';
 import type { RisingVaultRig } from './rig.js';
 
 /**
@@ -98,11 +97,6 @@ describe('dissolve stillness', () => {
     expect(maxDrift(update, stage, 0.026)).toBe(0);
   });
 
-  it("the coda holds the site's first frame through the 9→coda melt", () => {
-    const stage = makeStage();
-    const update = createCoda({ rig }, stage as never);
-    expect(maxDrift(update, stage, 0.062)).toBe(0);
-  });
 });
 
 describe('continuous scene handoffs', () => {
