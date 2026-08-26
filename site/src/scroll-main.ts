@@ -388,6 +388,9 @@ async function main() {
       height: track.offsetHeight,
     }));
   let stableLayout = measureTracks();
+  let stableViewportWidth = window.innerWidth;
+  const touchViewport =
+    navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches;
   let resizeAnchor: { track: HTMLElement; progress: number } | null = null;
   let resizeReady = false;
   window.setTimeout(() => {
@@ -413,10 +416,18 @@ async function main() {
   };
   let resizeTimer: number | undefined;
   const settleResize = () => {
+    const widthChanged = Math.abs(window.innerWidth - stableViewportWidth) > 1;
+    // Mobile browser chrome changes the visual viewport's height as the
+    // page starts moving. Treating each of those changes as an orientation
+    // change makes Lenis repeatedly reposition the first scene beneath the
+    // user's finger. A real rotation changes the width and still takes the
+    // anchored path below.
+    if (touchViewport && !widthChanged && !resizeAnchor) return;
     if (!resizeReady) {
       lenis.resize();
       ScrollTrigger.refresh();
       stableLayout = measureTracks();
+      stableViewportWidth = window.innerWidth;
       return;
     }
     rememberScrollPosition();
@@ -431,6 +442,7 @@ async function main() {
         ScrollTrigger.update();
       }
       stableLayout = measureTracks();
+      stableViewportWidth = window.innerWidth;
       resizeAnchor = null;
       resizeTimer = undefined;
     }, 160);
@@ -445,6 +457,16 @@ async function main() {
   // the page opens on scene 1's first frame regardless of bind order
   show(worlds.one);
   scene1(0);
+
+  // Compile the first visible WebGPU pipelines while the loading veil is
+  // still present. Without this warm-up, phones pay the shader/pipeline
+  // setup cost during their first scroll gesture, which reads as a broken
+  // first scene even though later chapters are smooth.
+  say('warming the stage…');
+  await stage.renderer.compileAsync(stage.scene, stage.camera);
+  await new Promise<void>((resolve) =>
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve())),
+  );
 
   document.querySelector('#loader')!.classList.add('done');
 }
