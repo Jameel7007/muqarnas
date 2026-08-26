@@ -9,6 +9,7 @@ import {
   max,
   mix,
   mx_noise_float,
+  normalViewGeometry,
   positionWorld,
   pow,
   smoothstep,
@@ -64,6 +65,16 @@ export function plasterMaterial(opts: PlasterOptions = {}): MeshStandardNodeMate
   const material = new MeshStandardNodeMaterial();
   material.metalness = 0;
   material.side = DoubleSide; // the profile view sees the extrados too
+  // A plate is lit by the face it WEARS, not the face you happen to see.
+  // The roofs' true normals point into the room (the lift flips the winding
+  // toward the intrados) and the key sits BELOW the horizon, so a plate
+  // shaded by three's auto-flipped back-face normal receives no sun at all.
+  // While the plan lies flat that reads as dark plates; the instant a plate
+  // tilts past the eye it flips front-facing all at once and pops from dark
+  // to fully lit in a single frame — measured at ~0.37 against a mean plate
+  // brightness of 0.13. Shading from the unflipped normal makes brightness
+  // invariant under the flip, so the pop cannot occur, in any scene.
+  material.normalNode = normalViewGeometry;
 
   const ao = attribute('ao', 'float');
   const paint = attribute('paint', 'float');
