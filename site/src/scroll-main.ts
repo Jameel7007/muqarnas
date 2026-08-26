@@ -150,6 +150,12 @@ async function main() {
   // sr-only transcript, so the canvas needs only a name, not narration
   const canvas = el('#stage').querySelector('canvas');
   if (canvas) {
+    // OrbitControls sets `touch-action: none` on its canvas even while the
+    // controls are disabled. Because this canvas covers the viewport, that
+    // blocks the browser's native one-finger scroll gesture on phones.
+    // Keep vertical touch panning native; horizontal drags still reach the
+    // controls when the coda enables them.
+    canvas.style.touchAction = 'pan-y';
     canvas.setAttribute('role', 'img');
     canvas.setAttribute(
       'aria-label',
