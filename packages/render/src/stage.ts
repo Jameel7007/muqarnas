@@ -26,6 +26,8 @@ export interface VaultStage {
    * once the pixels are in place.
    */
   captureFrame(target: HTMLCanvasElement, onDone?: () => void): void;
+  /** Reapply responsive scene framing after the projection has changed. */
+  onResize(listener: () => void): () => void;
   /** 'webgpu' or 'webgl2' after init */
   readonly backend: string;
   dispose(): void;
@@ -131,6 +133,7 @@ export async function createVaultStage(container: HTMLElement): Promise<VaultSta
   // compositions shrink instead of falling off the sides
   const BASE_FOV = 44;
   const BASE_ASPECT = 16 / 9;
+  const resizeListeners = new Set<() => void>();
   const resize = () => {
     const w = container.clientWidth;
     const h = container.clientHeight;
@@ -148,6 +151,7 @@ export async function createVaultStage(container: HTMLElement): Promise<VaultSta
       camera.fov = Math.min(wide, 78);
     }
     camera.updateProjectionMatrix();
+    for (const listener of resizeListeners) listener();
   };
   const observer = new ResizeObserver(resize);
   observer.observe(container);
@@ -198,8 +202,13 @@ export async function createVaultStage(container: HTMLElement): Promise<VaultSta
     captureFrame(target, onDone) {
       pendingCaptures.push({ target, onDone });
     },
+    onResize(listener) {
+      resizeListeners.add(listener);
+      return () => resizeListeners.delete(listener);
+    },
     dispose() {
       observer.disconnect();
+      resizeListeners.clear();
       renderer.setAnimationLoop(null);
       renderer.dispose();
       renderer.domElement.remove();

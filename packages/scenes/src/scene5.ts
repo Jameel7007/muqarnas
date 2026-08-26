@@ -1,5 +1,6 @@
-import { Vector3, type LineSegments, type LineBasicMaterial } from 'three';
+import { Box3, Vector3, type LineSegments, type LineBasicMaterial } from 'three';
 import { LIGHTING, lerpLighting, type VaultStage } from '@muqarnas/render';
+import { fitCameraToGeometry, sampleCameraPath, type CameraKey } from './camera.js';
 import type { RisingVaultRig } from './rig.js';
 
 /**
@@ -34,14 +35,10 @@ const smooth = (t: number) => {
 };
 const span = (p: number, a: number, b: number) => smooth((p - a) / (b - a));
 
-interface CamKey {
-  readonly at: number;
-  readonly pos: [number, number, number];
-  readonly target: [number, number, number];
-}
-
-const CAMERA_PATH: CamKey[] = [
+const CAMERA_PATH: CameraKey[] = [
   { at: 0.0, pos: [0, -7, 58], target: [0, 0, 0] }, // the drawing, from above
+  // the incoming dissolve finishes before the camera leaves the drawing
+  { at: 0.06, pos: [0, -7, 58], target: [0, 0, 0] },
   { at: 0.5, pos: [2, -36, 30], target: [0, 0, 1.5] }, // leaving the plane
   { at: 1.0, pos: [15, -26, 15], target: [0, -1, 1] }, // the first ring whole, a crown on the drawing
 ];
@@ -64,6 +61,7 @@ export function createScene5(
 ) {
   const pos = new Vector3();
   const tgt = new Vector3();
+  const frameBounds = new Box3();
 
   return (p: number): void => {
     // the rise: tier 1 only; everything above stays a drawing
@@ -79,14 +77,9 @@ export function createScene5(
     }
 
     // camera along the path
-    let seg = 0;
-    while (seg < CAMERA_PATH.length - 2 && p > CAMERA_PATH[seg + 1]!.at) seg++;
-    const a = CAMERA_PATH[seg]!;
-    const b = CAMERA_PATH[seg + 1]!;
-    const t = smooth((p - a.at) / (b.at - a.at));
-    pos.set(...a.pos).lerp(new Vector3(...b.pos), t);
-    tgt.set(...a.target).lerp(new Vector3(...b.target), t);
+    sampleCameraPath(CAMERA_PATH, p, pos, tgt);
     stage.camera.position.copy(pos);
+    fitCameraToGeometry(stage.camera, tgt, rig.geometry, frameBounds);
     stage.controls.target.copy(tgt);
     stage.controls.update();
 

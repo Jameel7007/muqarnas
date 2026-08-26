@@ -52,4 +52,27 @@ describe('coda framing', () => {
       expect(stage.controls.target.distanceTo(SPHERE.center)).toBeLessThan(1e-9);
     }
   });
+
+  it('clears the introductory caption when free-look begins', () => {
+    let start = () => {};
+    const stage = makeStage();
+    stage.controls.addEventListener = (type?: string, listener?: () => void) => {
+      if (type === 'start' && listener) start = listener;
+    };
+    const caption = { style: { opacity: '' } } as unknown as HTMLElement;
+    const update = createCoda({ rig }, stage as never, { caption });
+
+    update(0.12);
+    expect(Number(caption.style.opacity)).toBeGreaterThan(0.9);
+    start();
+    update(0.12);
+    expect(caption.style.opacity).toBe('0');
+  });
+
+  it('clears the caption early even when the viewer only scrolls', () => {
+    const caption = { style: { opacity: '' } } as unknown as HTMLElement;
+    const update = createCoda({ rig }, makeStage() as never, { caption });
+    update(0.24);
+    expect(caption.style.opacity).toBe('0');
+  });
 });

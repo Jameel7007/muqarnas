@@ -57,6 +57,9 @@ export function createCoda(parts: CodaParts, stage: VaultStage, dom: CodaDom = {
   let userDrove = false;
   stage.controls.addEventListener('start', () => {
     userDrove = true;
+    // The caption invites the gesture; taking hold should complete that
+    // invitation immediately instead of leaving prose over the object.
+    if (dom.caption) dom.caption.style.opacity = '0';
     if (dom.hint) dom.hint.style.opacity = '0';
   });
   stage.controls.enablePan = false;
@@ -146,13 +149,14 @@ export function createCoda(parts: CodaParts, stage: VaultStage, dom: CodaDom = {
     applyLight(p);
 
     if (dom.caption) {
-      dom.caption.style.opacity = String(smooth(Math.min(1, p / 0.12)) * (1 - smooth((p - 0.7) / 0.2)));
+      const intro = smooth(Math.min(1, p / 0.1)) * (1 - smooth((p - 0.16) / 0.08));
+      dom.caption.style.opacity = String(userDrove ? 0 : intro);
     }
     if (dom.hint && !userDrove) {
-      dom.hint.style.opacity = p > 0.09 ? '1' : '0';
+      dom.hint.style.opacity = String(smooth((p - 0.18) / 0.06));
     }
     if (dom.panel) {
-      const o = smooth((p - 0.1) / 0.08);
+      const o = smooth((p - 0.18) / 0.08);
       dom.panel.style.opacity = String(o);
       dom.panel.style.pointerEvents = o > 0.5 ? 'auto' : 'none';
     }

@@ -1,5 +1,6 @@
-import { Vector3, type LineBasicMaterial, type LineSegments } from 'three';
+import { Box3, Vector3, type LineBasicMaterial, type LineSegments } from 'three';
 import { LIGHTING, lerpLighting, type VaultStage } from '@muqarnas/render';
+import { fitCameraToGeometry, sampleCameraPath, type CameraKey } from './camera.js';
 import { cascadeTiers, type RisingVaultRig } from './rig.js';
 
 /**
@@ -13,8 +14,8 @@ import { cascadeTiers, type RisingVaultRig } from './rig.js';
  * light crosses from the reading state back into the rake as the cells
  * gain the depth the language needs — the building is finished under its
  * signature light. At the top the crown closes to a ring, not a point —
- * the plan was an annulus all along — and the camera leaves through the
- * one opening the building cannot close, to look back down at it whole.
+ * the plan was an annulus all along — and the camera steps calmly outside
+ * to hand the completed building to the next scene.
  *
  * Opens in scene 5's exact final state (tier 1 alone — the climb curve
  * maxes the cascade with that base so nothing pre-rises) and ends in
@@ -62,25 +63,19 @@ const RAKE_A = LIGHTING.rake;
 export function createScene6(parts: Scene6Parts, stage: VaultStage, dom: Scene6Dom = {}) {
   const pos = new Vector3();
   const tgt = new Vector3();
-  const C = parts.crownZ;
+  const frameBounds = new Box3();
 
-  interface CamKey {
-    readonly at: number;
-    readonly pos: [number, number, number];
-    readonly target: [number, number, number];
-  }
-  const path: CamKey[] = [
+  const path: CameraKey[] = [
     { at: 0.0, pos: HANDOFF.pos, target: HANDOFF.target }, // among the corner cells
     // stepping over the standing first ring — tier 2 is still flat this early,
     // which is what keeps the move clear of the masonry
     { at: 0.16, pos: [18, -15, 4], target: [2, 0, 6] },
     { at: 0.42, pos: [26, -18, 15], target: [0, 0, 10] }, // the cone climbing
     { at: 0.66, pos: [16, 20, 24], target: [0, 0, 16] }, // orbiting as the rings close
-    { at: 0.85, pos: [10, -18, 6], target: [0, 0, 16] }, // coming back down the flank
-    // under the rim and beneath: the vault hangs over an opening, and from
-    // below — the only view the lighting language exists for — the whole
-    // climb is overhead at once
-    { at: 1.0, pos: [3.5, -9.5, -14], target: [0, 0, 22] },
+    { at: 0.82, pos: [25, -4, 20], target: [0, 0, 16] }, // widening around the complete vault
+    // Continue out along the same flank. Diving beneath the crown here made
+    // the following exterior reveal read as a flip rather than one camera move.
+    { at: 1.0, pos: [15, -28, 18], target: [0, 0, 13] },
   ];
 
   return (p: number): void => {
@@ -95,14 +90,9 @@ export function createScene6(parts: Scene6Parts, stage: VaultStage, dom: Scene6D
     }
 
     // camera
-    let sg = 0;
-    while (sg < path.length - 2 && p > path[sg + 1]!.at) sg++;
-    const a = path[sg]!;
-    const b = path[sg + 1]!;
-    const t = smooth((p - a.at) / (b.at - a.at));
-    pos.set(...a.pos).lerp(new Vector3(...b.pos), t);
-    tgt.set(...a.target).lerp(new Vector3(...b.target), t);
+    sampleCameraPath(path, p, pos, tgt);
     stage.camera.position.copy(pos);
+    fitCameraToGeometry(stage.camera, tgt, parts.rig.geometry, frameBounds);
     stage.controls.target.copy(tgt);
     stage.controls.update();
 
@@ -128,7 +118,7 @@ export function createScene6(parts: Scene6Parts, stage: VaultStage, dom: Scene6D
       dom.captionB.style.opacity = String(span(p, 0.42, 0.48) * (1 - span(p, 0.6, 0.68)));
     }
     if (dom.captionC) {
-      dom.captionC.style.opacity = String(span(p, 0.82, 0.9));
+      dom.captionC.style.opacity = String(span(p, 0.82, 0.9) * (1 - span(p, 0.94, 0.99)));
     }
   };
 }

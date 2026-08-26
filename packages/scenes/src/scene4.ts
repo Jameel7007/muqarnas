@@ -1,6 +1,11 @@
 import { Group, LineBasicMaterial, LineSegments, Vector3 } from 'three';
 import { worldOutline, type Plan } from '@muqarnas/plan';
 import { LIGHTING, lerpLighting, type VaultStage } from '@muqarnas/render';
+import {
+  fitCameraToObject,
+  sampleCameraPath,
+  type CameraKey,
+} from './camera.js';
 import { INK, drawOn, inkLines, inkOpacity, smooth, span } from './ink.js';
 import { makePlanLines } from './planLines.js';
 
@@ -146,13 +151,7 @@ export function makeScene4Objects(plan: Plan): Scene4Objects {
   };
 }
 
-interface CamKey {
-  readonly at: number;
-  readonly pos: [number, number, number];
-  readonly target: [number, number, number];
-}
-
-const CAMERA_PATH: CamKey[] = [
+const CAMERA_PATH: CameraKey[] = [
   { at: 0.0, pos: [0, -5, 40], target: [0, 0, 0] }, // the empty field
   { at: 0.1, pos: [0, -5, 40], target: [0, 0, 0] }, // held while the armature rules
   { at: 0.18, pos: [8.6, 6.4, 9], target: [9.3, 9.3, 0] }, // down to the corner
@@ -196,14 +195,15 @@ export function createScene4(objects: Scene4Objects, stage: VaultStage, dom: Sce
     inkOpacity(objects.settled, PLAN_OPACITY * settle);
 
     // camera
-    let sg = 0;
-    while (sg < CAMERA_PATH.length - 2 && p > CAMERA_PATH[sg + 1]!.at) sg++;
-    const a = CAMERA_PATH[sg]!;
-    const b = CAMERA_PATH[sg + 1]!;
-    const t = smooth((p - a.at) / (b.at - a.at));
-    pos.set(...a.pos).lerp(new Vector3(...b.pos), t);
-    tgt.set(...a.target).lerp(new Vector3(...b.target), t);
+    sampleCameraPath(CAMERA_PATH, p, pos, tgt);
     stage.camera.position.copy(pos);
+    // Keep the authored corner close-up, but protect the complete subject
+    // of each phase: the written quarter first, then the assembled plan.
+    if (p >= 0.13 && p <= 0.55) {
+      fitCameraToObject(stage.camera, tgt, objects.quarterInk);
+    } else if (p >= 0.62) {
+      fitCameraToObject(stage.camera, tgt, objects.group);
+    }
     stage.controls.target.copy(tgt);
     stage.controls.update();
 

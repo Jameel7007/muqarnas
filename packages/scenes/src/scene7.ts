@@ -1,5 +1,6 @@
-import { Vector3, type LineBasicMaterial, type LineSegments, type Object3D } from 'three';
+import { Box3, Vector3, type LineBasicMaterial, type LineSegments, type Object3D } from 'three';
 import { LIGHTING, lerpLighting, type VaultStage } from '@muqarnas/render';
+import { fitCameraToBox, sampleCameraPath, type CameraKey } from './camera.js';
 import { cascadeTiers, type RisingVaultRig } from './rig.js';
 
 /**
@@ -37,46 +38,17 @@ const smooth = (t: number) => {
 };
 const span = (p: number, a: number, b: number) => smooth((p - a) / (b - a));
 
-interface CamKey {
-  readonly at: number;
-  readonly pos: [number, number, number];
-  readonly target: [number, number, number];
-}
+/** Scene 6 hands the complete vault over from this exterior flank. */
+const EXIT_FROM = { pos: [15, -28, 18] as const, target: [0, 0, 13] as const };
 
-/**
- * The presentation: "a vault stands" now means seeing all of it, in the
- * round — a stately orbit around the complete building, crown to base
- * ring in frame the whole way, easing inward as it circles and landing
- * exactly on the descent's first key.
- */
-const ORBIT = {
-  // the dissolve needs stillness: hold scene 6's stance until the melt
-  // completes (p < holdUntil), only then leave for the orbit — a camera
-  // moving under the held frame reads as a smeared double-exposure
-  holdUntil: 0.05,
-  from: 0.13,
-  until: 0.28,
-  thetaStart: (116.4 * Math.PI) / 180,
-  thetaEnd: (286.4 * Math.PI) / 180, // atan2(-34, 10): the descent key's azimuth
-  rStart: 58,
-  rEnd: 35.4, // the descent key's ground radius
-  zStart: 18,
-  zEnd: 30,
-  targetStart: new Vector3(0, 0, 15),
-  targetEnd: new Vector3(0, 0, 6),
-};
-
-/**
- * Scene 6 ends beneath the vault; cutting straight to the far orbit was
- * the last abrupt jump in the piece. The scene now LEAVES: out from under
- * the rim along the reverse of scene 8's arrival, rising into the orbit's
- * first stance.
- */
-const EXIT_FROM = { pos: new Vector3(3.5, -9.5, -14), target: new Vector3(0, 0, 22) };
-
-const CAMERA_PATH: CamKey[] = [
-  { at: 0.28, pos: [10, -34, 30], target: [0, 0, 6] }, // drifting upward as it descends
+const CAMERA_PATH: CameraKey[] = [
+  { at: 0, ...EXIT_FROM },
+  // One broad, monotonic crane move replaces the short half-orbit that
+  // twisted around the vault and then immediately reversed toward plan view.
+  { at: 0.18, pos: [13, -31, 25], target: [0, 0, 10] },
+  { at: 0.36, pos: [7, -23, 42], target: [0, 0, 4] },
   { at: 0.5, pos: [0, -6, 56], target: [0, 0, 0] }, // overhead: the drawing again
+  { at: 0.56, pos: [0, -6, 56], target: [0, 0, 0] }, // let the coincident plan breathe
   { at: 0.76, pos: [-24, -27, 20], target: [0, 0, 8] }, // down the other side
   { at: 1.0, pos: [-26, -17, 7], target: [0, 0, 12] }, // looking up at the second building
 ];
@@ -88,6 +60,14 @@ const RAKE_B = { ...LIGHTING.rake, sun: { ...LIGHTING.rake.sun, azimuthDeg: 150 
 export function createScene7(parts: Scene7Parts, stage: VaultStage, dom: Scene7Dom = {}) {
   const pos = new Vector3();
   const tgt = new Vector3();
+  // Capture one stable envelope before either rig begins to move. Refitting
+  // to the live geometry made the camera pump whenever the identity of the
+  // highest surviving tier changed during collapse/reconstruction.
+  parts.rigA.geometry.computeBoundingBox();
+  parts.rigB.geometry.computeBoundingBox();
+  const frameBounds = new Box3();
+  if (parts.rigA.geometry.boundingBox) frameBounds.copy(parts.rigA.geometry.boundingBox);
+  if (parts.rigB.geometry.boundingBox) frameBounds.union(parts.rigB.geometry.boundingBox);
 
   return (p: number): void => {
     // A: stands complete out of scene 6, holds, then descends
@@ -110,34 +90,11 @@ export function createScene7(parts: Scene7Parts, stage: VaultStage, dom: Scene7D
       parts.planLines.visible = m.opacity > 0.01;
     }
 
-    // camera: out from beneath, then the orbit presents the whole
-    // building, then the keys descend
-    if (p < ORBIT.from) {
-      const t = smooth((p - ORBIT.holdUntil) / (ORBIT.from - ORBIT.holdUntil));
-      const ox = ORBIT.rStart * Math.cos(ORBIT.thetaStart);
-      const oy = ORBIT.rStart * Math.sin(ORBIT.thetaStart);
-      pos.set(
-        EXIT_FROM.pos.x + (ox - EXIT_FROM.pos.x) * t,
-        EXIT_FROM.pos.y + (oy - EXIT_FROM.pos.y) * t,
-        EXIT_FROM.pos.z + (ORBIT.zStart - EXIT_FROM.pos.z) * t,
-      );
-      tgt.copy(EXIT_FROM.target).lerp(ORBIT.targetStart, t);
-    } else if (p < ORBIT.until) {
-      const t = smooth((p - ORBIT.from) / (ORBIT.until - ORBIT.from));
-      const theta = ORBIT.thetaStart + (ORBIT.thetaEnd - ORBIT.thetaStart) * t;
-      const r = ORBIT.rStart + (ORBIT.rEnd - ORBIT.rStart) * t;
-      pos.set(r * Math.cos(theta), r * Math.sin(theta), ORBIT.zStart + (ORBIT.zEnd - ORBIT.zStart) * t);
-      tgt.copy(ORBIT.targetStart).lerp(ORBIT.targetEnd, t);
-    } else {
-      let seg = 0;
-      while (seg < CAMERA_PATH.length - 2 && p > CAMERA_PATH[seg + 1]!.at) seg++;
-      const a = CAMERA_PATH[seg]!;
-      const b = CAMERA_PATH[seg + 1]!;
-      const t = smooth((p - a.at) / (b.at - a.at));
-      pos.set(...a.pos).lerp(new Vector3(...b.pos), t);
-      tgt.set(...a.target).lerp(new Vector3(...b.target), t);
-    }
+    // camera: one continuous exterior rise into the drawing, followed by
+    // the second reading's descent on the opposite side
+    sampleCameraPath(CAMERA_PATH, p, pos, tgt);
     stage.camera.position.copy(pos);
+    fitCameraToBox(stage.camera, tgt, frameBounds);
     stage.controls.target.copy(tgt);
     stage.controls.update();
 

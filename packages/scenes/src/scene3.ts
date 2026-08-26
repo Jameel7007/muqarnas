@@ -13,6 +13,11 @@ import {
   type Plan,
 } from '@muqarnas/plan';
 import { LIGHTING, type VaultStage } from '@muqarnas/render';
+import {
+  fitCameraToObject,
+  sampleCameraPath,
+  type CameraKey,
+} from './camera.js';
 import { drawOn, inkLines, inkOpacity, smooth, span } from './ink.js';
 
 /**
@@ -342,13 +347,7 @@ export function makeScene3Objects(plan: Plan): Scene3Objects & { pieces: Piece[]
   return { group, fragment, fragmentCount: patch.n, pieces };
 }
 
-interface CamKey {
-  readonly at: number;
-  readonly pos: [number, number, number];
-  readonly target: [number, number, number];
-}
-
-const CAMERA_PATH: CamKey[] = [
+const CAMERA_PATH: CameraKey[] = [
   { at: 0.0, pos: [0, -0.5, 6.6], target: [0, 0.9, 0] }, // the seeds
   { at: 0.5, pos: [0, -0.5, 6.6], target: [0, 0.9, 0] }, // held through the derivations
   { at: 0.62, pos: [0, -3.1, 11.2], target: [0, -0.72, 0] }, // the row revealed, clear of the caption band
@@ -389,14 +388,9 @@ export function createScene3(
     drawOn(objects.fragment, span(p, 0.68, 0.82));
 
     // camera
-    let sg = 0;
-    while (sg < CAMERA_PATH.length - 2 && p > CAMERA_PATH[sg + 1]!.at) sg++;
-    const a = CAMERA_PATH[sg]!;
-    const b = CAMERA_PATH[sg + 1]!;
-    const t = smooth((p - a.at) / (b.at - a.at));
-    pos.set(...a.pos).lerp(new Vector3(...b.pos), t);
-    tgt.set(...a.target).lerp(new Vector3(...b.target), t);
+    sampleCameraPath(CAMERA_PATH, p, pos, tgt);
     stage.camera.position.copy(pos);
+    fitCameraToObject(stage.camera, tgt, objects.group);
     stage.controls.target.copy(tgt);
     stage.controls.update();
 

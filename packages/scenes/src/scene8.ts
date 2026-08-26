@@ -1,4 +1,6 @@
+import { Box3 } from 'three';
 import { type LightingState, LIGHTING, lerpLighting, type VaultStage } from '@muqarnas/render';
+import { fitCameraToGeometry } from './camera.js';
 import { cascadeTiers, type RisingVaultRig } from './rig.js';
 import { smooth } from './ink.js';
 
@@ -100,6 +102,8 @@ const smoothstep = (t: number) => {
 };
 
 export function createScene8(parts: Scene8Parts, stage: VaultStage, dom: Scene8Dom = {}) {
+  const frameBounds = new Box3();
+
   return (p: number): void => {
     parts.rig.update(cascadeTiers(1, parts.rig.maxTier));
 
@@ -114,6 +118,7 @@ export function createScene8(parts: Scene8Parts, stage: VaultStage, dom: Scene8D
       ARRIVE_FROM.target[1] + (CAMERA.target[1] - ARRIVE_FROM.target[1]) * arrive,
       ARRIVE_FROM.target[2] + (CAMERA.target[2] - ARRIVE_FROM.target[2]) * arrive,
     );
+    fitCameraToGeometry(stage.camera, stage.controls.target, parts.rig.geometry, frameBounds);
     stage.controls.update();
 
     const toDay = smoothstep((p - 0.005) / 0.05);

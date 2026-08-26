@@ -1,7 +1,8 @@
 import { Group, Vector3, type LineSegments } from 'three';
 import { COEFFICIENT_PER_MODULE, kashiProfile, type KashiProfile } from '@muqarnas/plan';
 import { LIGHTING, type VaultStage } from '@muqarnas/render';
-import { drawOn, inkLines, inkOpacity, smooth, span } from './ink.js';
+import { sampleCameraPath, type CameraKey } from './camera.js';
+import { drawOn, inkLines, inkOpacity, span } from './ink.js';
 
 /**
  * SCENE 2 — THE MODULE AND THE PROFILE. The measure.
@@ -179,15 +180,9 @@ export function makeScene2Objects(): Scene2Objects {
   };
 }
 
-interface CamKey {
-  readonly at: number;
-  readonly pos: [number, number, number];
-  readonly target: [number, number, number];
-}
-
 // targets sit low on the drawing so the figure rides high in frame and the
 // caption band along the bottom stays clear at any window aspect
-const CAMERA_PATH: CamKey[] = [
+const CAMERA_PATH: CameraKey[] = [
   { at: 0.0, pos: [0.5, -5.4, 0.9], target: [0.5, 0, 0.9] }, // facing the wall of drawing
   { at: 0.56, pos: [0.5, -5.4, 0.9], target: [0.5, 0, 0.9] }, // held through the recipe
   // the count adds a tall caption block beneath the drawing, so this key
@@ -243,13 +238,7 @@ export function createScene2(objects: Scene2Objects, stage: VaultStage, dom: Sce
     inkOpacity(objects.frame, 0.6 - 0.38 * span(p, 0.82, 0.9));
 
     // camera: an elevation, held; a lean; a step back
-    let sg = 0;
-    while (sg < CAMERA_PATH.length - 2 && p > CAMERA_PATH[sg + 1]!.at) sg++;
-    const a = CAMERA_PATH[sg]!;
-    const b = CAMERA_PATH[sg + 1]!;
-    const t = smooth((p - a.at) / (b.at - a.at));
-    pos.set(...a.pos).lerp(new Vector3(...b.pos), t);
-    tgt.set(...a.target).lerp(new Vector3(...b.target), t);
+    sampleCameraPath(CAMERA_PATH, p, pos, tgt);
     stage.camera.position.copy(pos);
     stage.controls.target.copy(tgt);
     stage.controls.update();

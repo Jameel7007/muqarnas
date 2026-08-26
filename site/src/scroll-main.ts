@@ -370,6 +370,72 @@ async function main() {
     bindCutDissolve(runway, dissolve, (target, onDone) => stage.captureFrame(target, onDone));
   }
 
+  // Every chapter and runway is sized in vh. Keep a snapshot of the last
+  // stable layout so an orientation change can retain the same track and
+  // normalized progress instead of reinterpreting the old absolute scrollY
+  // against the new viewport height.
+  type TrackLayout = { track: HTMLElement; top: number; height: number };
+  const measureTracks = (): TrackLayout[] =>
+    Array.from(document.querySelectorAll<HTMLElement>('.track')).map((track) => ({
+      track,
+      top: track.offsetTop,
+      height: track.offsetHeight,
+    }));
+  let stableLayout = measureTracks();
+  let resizeAnchor: { track: HTMLElement; progress: number } | null = null;
+  let resizeReady = false;
+  window.setTimeout(() => {
+    stableLayout = measureTracks();
+    resizeReady = true;
+  }, 600);
+  const rememberScrollPosition = () => {
+    if (!resizeReady || resizeAnchor || stableLayout.length === 0) return;
+    const scroll = lenis.scroll;
+    const layout =
+      stableLayout.find(({ top, height }) => scroll >= top && scroll < top + height) ??
+      stableLayout.reduce((nearest, candidate) => {
+        const distance = Math.min(
+          Math.abs(scroll - candidate.top),
+          Math.abs(scroll - candidate.top - candidate.height),
+        );
+        return distance < nearest.distance ? { layout: candidate, distance } : nearest;
+      }, { layout: stableLayout[0]!, distance: Number.POSITIVE_INFINITY }).layout;
+    resizeAnchor = {
+      track: layout.track,
+      progress: Math.min(1, Math.max(0, (scroll - layout.top) / Math.max(1, layout.height))),
+    };
+  };
+  let resizeTimer: number | undefined;
+  const settleResize = () => {
+    if (!resizeReady) {
+      lenis.resize();
+      ScrollTrigger.refresh();
+      stableLayout = measureTracks();
+      return;
+    }
+    rememberScrollPosition();
+    if (resizeTimer !== undefined) window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(() => {
+      lenis.resize();
+      ScrollTrigger.refresh();
+      if (resizeAnchor) {
+        const { track, progress } = resizeAnchor;
+        const target = track.offsetTop + track.offsetHeight * progress;
+        lenis.scrollTo(target, { immediate: true });
+        ScrollTrigger.update();
+      }
+      stableLayout = measureTracks();
+      resizeAnchor = null;
+      resizeTimer = undefined;
+    }, 160);
+  };
+  window.addEventListener('resize', settleResize, { passive: true });
+
+  // ResizeObserver updates the camera projection after the browser's own
+  // resize event. Settle once more from that exact point so framing and the
+  // narrative position use the same final viewport.
+  stage.onResize(settleResize);
+
   // the page opens on scene 1's first frame regardless of bind order
   show(worlds.one);
   scene1(0);

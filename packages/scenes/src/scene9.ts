@@ -1,4 +1,5 @@
 import {
+  Box3,
   CircleGeometry,
   Group,
   Mesh,
@@ -8,8 +9,9 @@ import {
   type LineSegments,
 } from 'three';
 import { LIGHTING, lerpLighting, type VaultStage } from '@muqarnas/render';
+import { fitCameraToBox, sampleCameraPath, type CameraKey } from './camera.js';
 import { cascadeTiers, type RisingVaultRig } from './rig.js';
-import { inkLines, inkOpacity, smooth, span } from './ink.js';
+import { inkLines, inkOpacity, span } from './ink.js';
 
 /**
  * SCENE 9 — THE RETURN. The close.
@@ -74,13 +76,7 @@ export function returnDescent(p: number): number {
   return 1 - span(p, 0.18, 0.62);
 }
 
-interface CamKey {
-  readonly at: number;
-  readonly pos: [number, number, number];
-  readonly target: [number, number, number];
-}
-
-const CAMERA_PATH: CamKey[] = [
+const CAMERA_PATH: CameraKey[] = [
   { at: 0.0, pos: [0.5, -2.5, -16], target: [0, 0, 20] }, // scene 8's stance, kept
   { at: 0.3, pos: [26, -20, 17], target: [0, 0, 9] }, // stepping out for the last time
   { at: 0.68, pos: [0, -7, 58], target: [0, 0, 0] }, // the site's first frame
@@ -98,6 +94,8 @@ export function createScene9(
 ) {
   const pos = new Vector3();
   const tgt = new Vector3();
+  parts.rig.geometry.computeBoundingBox();
+  const frameBounds = parts.rig.geometry.boundingBox?.clone() ?? new Box3();
 
   return (p: number): void => {
     // down through the tiers
@@ -124,14 +122,9 @@ export function createScene9(
     objects.point.visible = pm.opacity > 0.004;
 
     // camera
-    let sg = 0;
-    while (sg < CAMERA_PATH.length - 2 && p > CAMERA_PATH[sg + 1]!.at) sg++;
-    const a = CAMERA_PATH[sg]!;
-    const b = CAMERA_PATH[sg + 1]!;
-    const t = smooth((p - a.at) / (b.at - a.at));
-    pos.set(...a.pos).lerp(new Vector3(...b.pos), t);
-    tgt.set(...a.target).lerp(new Vector3(...b.target), t);
+    sampleCameraPath(CAMERA_PATH, p, pos, tgt);
     stage.camera.position.copy(pos);
+    fitCameraToBox(stage.camera, tgt, frameBounds);
     stage.controls.target.copy(tgt);
     stage.controls.update();
 

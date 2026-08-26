@@ -9,7 +9,12 @@ import {
   type Material,
 } from 'three';
 import { LIGHTING, lerpLighting, withAoAttribute, type VaultStage } from '@muqarnas/render';
-import { drawOn, inkLines, smooth, span } from './ink.js';
+import {
+  fitCameraToObject,
+  sampleCameraPath,
+  type CameraKey,
+} from './camera.js';
+import { drawOn, inkLines, span } from './ink.js';
 
 /**
  * SCENE 1 — THE SQUARE AND THE CIRCLE. The argument.
@@ -143,13 +148,7 @@ export function makeScene1Objects(
   return { group, inkSquare, inkCircle, inkCorners, walls, dome, wallHeight };
 }
 
-interface CamKey {
-  readonly at: number;
-  readonly pos: [number, number, number];
-  readonly target: [number, number, number];
-}
-
-const CAMERA_PATH: CamKey[] = [
+const CAMERA_PATH: CameraKey[] = [
   { at: 0.0, pos: [0, -6, 52], target: [0, 0, 0] }, // the drawing, from above
   { at: 0.3, pos: [0, -6, 52], target: [0, 0, 0] }, // held still while it draws
   { at: 0.52, pos: [16, -30, 30], target: [0, 0, 4] }, // tilting as the walls rise
@@ -164,6 +163,8 @@ const RAKE_CORNER = { ...LIGHTING.rake, sun: { ...LIGHTING.rake.sun, azimuthDeg:
 export function createScene1(objects: Scene1Objects, stage: VaultStage, dom: Scene1Dom = {}) {
   const pos = new Vector3();
   const tgt = new Vector3();
+  const roomFrame = new Vector3();
+  const domeFrame = new Vector3();
 
   return (p: number): void => {
     // the drawing draws itself: square, circle, then the leftover corners
@@ -188,14 +189,22 @@ export function createScene1(objects: Scene1Objects, stage: VaultStage, dom: Sce
     co.opacity = 0.55 * (1 - span(p, 0.6, 0.72));
 
     // camera
-    let seg = 0;
-    while (seg < CAMERA_PATH.length - 2 && p > CAMERA_PATH[seg + 1]!.at) seg++;
-    const a = CAMERA_PATH[seg]!;
-    const b = CAMERA_PATH[seg + 1]!;
-    const t = smooth((p - a.at) / (b.at - a.at));
-    pos.set(...a.pos).lerp(new Vector3(...b.pos), t);
-    tgt.set(...a.target).lerp(new Vector3(...b.target), t);
+    sampleCameraPath(CAMERA_PATH, p, pos, tgt);
     stage.camera.position.copy(pos);
+    // Frame the room first, then ease in only the extra retreat required by
+    // the descending dome. Including the dome on its first visible frame made
+    // the camera snap backward because its temporarily separated bounds are
+    // much taller than the room.
+    const domeVisible = objects.dome.visible;
+    objects.dome.visible = false;
+    fitCameraToObject(stage.camera, tgt, objects.group);
+    roomFrame.copy(stage.camera.position);
+    objects.dome.visible = domeVisible;
+    if (domeVisible) {
+      fitCameraToObject(stage.camera, tgt, objects.dome);
+      domeFrame.copy(stage.camera.position);
+      stage.camera.position.copy(roomFrame).lerp(domeFrame, span(p, 0.48, 0.62));
+    }
     stage.controls.target.copy(tgt);
     stage.controls.update();
 
